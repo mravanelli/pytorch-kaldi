@@ -111,6 +111,8 @@ The main hyperparameters of the models (i.e., learning rate, number of layers, n
 
 Note that RNN are significantly better than a standard MLP. In particular, the Li-GRU model (see [1,2]) for more details performs slightly better that the other model. As expected fMLLR features lead to the best performance. Note also that the performance of  14.3 obtained with our best system is, to the best of our knowledge, one of the best performance so far achieved with the TIMIT dataset.
 
+For comparison and reference purposes, in the folders  exp/our_results/TIMIT_{MLP,RNN,LSTM,GRU,M_GRU,liGRU} you can find the output results obtained by us. 
+
 
 ## Brief Overview of the Architecture
 
