@@ -1,15 +1,15 @@
 # pytorch-kaldi
-pytorch-kaldi is a project for developing state-of-the-art DNN/RNN hybrid speech recognition systems. The DNN part is managed by pytorch, while feature extraction, label computation, and decoding are performed with the kaldi toolkit.
+pytorch-kaldi is a public repository for developing state-of-the-art DNN/RNN hybrid speech recognition systems. The DNN part is managed by pytorch, while feature extraction, label computation, and decoding are performed with the kaldi toolkit.
 
 
 ## Introduction:
 This project releases a collection of codes and utilities to develop state-of-the-art DNN/RNN hybrid speech recognition systems. The DNN/RNN part is implemented in pytorch, while feature extraction, alignments, and decoding are performed with the Kaldi toolkit.  The current version of the provided system has the following features:
-- different types of NNs (e.g., *MLP*, *RNN*, *LSTM*, *GRU*, *Minimal GRU*, *Light GRU*)
-- recurrent dropout
-- batch and layer normalization
-- unidirectional/bidirectional RNNs
-- residual/skip connections
-- twin regularization
+- Supports different types of NNs (e.g., *MLP*, *RNN*, *LSTM*, *GRU*, *Minimal GRU*, *Light GRU*)
+- Supports  recurrent dropout
+- Supports  batch and layer normalization
+- Supports unidirectional/bidirectional RNNs
+- Supports  residual/skip connections
+- Supports  twin regularization
 - python2/python3 compatibility
 - multi-gpu training
 - recovery/saving checkpoints
@@ -18,21 +18,23 @@ This project releases a collection of codes and utilities to develop state-of-th
 The provided solution is designed for large-scale speech recognition experiments on both standard machines and HPC clusters. 
 
 ## Prerequisites:
-Linux is required (we tested our release on Ubuntu 17.04 and various versions of Debian).
+- Linux is required (we tested our release on Ubuntu 17.04 and various versions of Debian).
 
-We recommend to run the codes on a GPU machine. Make sure that the cuda libraries (https://developer.nvidia.com/cuda-downloads) are installed and correctly working. We tested our system on cuda 9.0,9.1 and 8.0.
+- We recommend to run the codes on a GPU machine. Make sure that the cuda libraries (https://developer.nvidia.com/cuda-downloads) are installed and correctly working. We tested our system on cuda 9.0, 9.1 and 8.0.
 Make sure that python is installed (the code is tested with python 2.7 and python 3.6). Even though not mandatory, we suggest to use Anaconda (https://anaconda.org/anaconda/python).
 
-If not already done, install pytorch (http://pytorch.org/). We tested our codes on pytorch 0.3.0 and pytorch 0.3.1. Older version of pytorch are likely to rise errors. To check your installation, type “python” and, once entered into the console, type “import torch”. Make sure everything is fine.
+- If not already done, install pytorch (http://pytorch.org/). We tested our codes on pytorch 0.3.0 and pytorch 0.3.1. Older version of pytorch are likely to rise errors. To check your installation, type “python” and, once entered into the console, type “import torch”. Make sure everything is fine.
 
-If not already done, install Kaldi (http://kaldi-asr.org/). As suggested during the installation, do not forget to add the path of the Kaldi binaries into $HOME/.bashrc. As a first test to check the installation, open a bash shell, type “copy-feats” and make sure no errors appear.
+- If not already done, install Kaldi (http://kaldi-asr.org/). As suggested during the installation, do not forget to add the path of the Kaldi binaries into $HOME/.bashrc. As a first test to check the installation, open a bash shell, type “copy-feats” and make sure no errors appear.
 
-Install kaldi-io package from the kaldi-io-for-python project (https://github.com/vesis84/kaldi-io-for-python). It provides a simple interface between kaldi and python. To install it:
+- Install *kaldi-io* package from the kaldi-io-for-python project (https://github.com/vesis84/kaldi-io-for-python). It provides a simple interface between kaldi and python. To install it:
+``` 
 run git clone https://github.com/vesis84/kaldi-io-for-python.git
 add PYTHONPATH=${PYTHONPATH}: to $HOME/.bashrc
-now type import kaldi_io from the python console and make sure the package is correctly imported. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
+``` 
+Type *import kaldi_io* into the python console and make sure the package is correctly imported. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
 
-The implementation of the RNN models orders the training sentences according to their length. This allows the system to minimize the need of zero padding when forming minibatches. The duration of each sentence is extracted using sox. Please, make sure it is installed (it is only used when generating the feature lists in the create_chunk.sh)
+- The implementation of the RNN models sorts the training sentences according to their length. This allows the system to minimize the need of zero padding when forming minibatches. The duration of each sentence is extracted using sox. Please, make sure it is installed (it is only used when generating the feature lists in the *create_chunk.sh*)
 
 
 ## How to run a TIMIT experiment:
@@ -75,7 +77,7 @@ For ordered mfcc features run:
 
 
 3. Setup the Config file.
-Go into the cfg folder, open a config file (e.g,*TIMIT_MLP.cfg*,*TIMIT_GRU.cfg*) and modify it according to your paths:
+Go into the *cfg* folder, open a config file (e.g,*TIMIT_MLP.cfg*,*TIMIT_GRU.cfg*) and modify it according to your paths:
 - *tr_fea_scp* contains the list of features created with create_chunks.sh.
 - *tr_fea_opts* allows users to easily add normalizations, derivatives and other types of feature processing.
 - *tr_lab_folder* is the kaldi folder containing the alignments (labels).
@@ -98,26 +100,21 @@ or
 ./run_exp.sh cfg/baselines/TIMIT_GRU.cfg > log.log 
 ``` 
 
-Note that run_exp performs a full ASR experiment (training, forward and decoding).
-If everything is working fine, you should find the following files in in the output folder:
+Note that *run_exp.sh* is a bash script that performs a full ASR experiment (training, forward, and decoding steps).
+If everything works fine, you should find the following files into the output folder:
 - a file *res.res* summarizing the training and eval performance over the various epochs. 
-For the MFCC experiment you should obtain something like this:
-For the GRU experiment you should obtain something like this:
+Take a look to *exp/our_results* for taking a look to the results you should obtaine where running the code.
 
-- a folder *decode_test* containing the speech recognition results. If you type *./RESULTS* you should be able to see the Phone Error Rate (PER%) for each experiment. For instance:
-``` 
-mfcc features: PER=18.0%
-fMLLR features: PER=16.8%
-``` 
-- the model *.pkl* is the final model used for speech decoding
-- the files *.info* reports loss and error performance for each training chunk
+- a folder *decode_test* containing the speech recognition results. If you type *./RESULTS* you should be able to see the Phone Error Rate (PER%) for each experiment. 
+- the model *.pkl* is the final model used for speech decoding.
+- the files *.info* reports loss and error performance for each training chunk.
 - the file *log.log* contains possible errors occurred in the training procedure.
 
 
 
 ## TIMIT Results:
 
-The results reported in each cell of the  table are the average *PER%* performance on the test set obtained after running five ASR experiments with different initialization seed. 
+The results reported in each cell of the  table are the average *PER%* performance obtained  on the test set  after running five ASR experiments with different initialization seeds. 
 
 | Model  | mfcc | fbank | fMLLR | 
 | ------ | -----| ------| ------| 
@@ -128,13 +125,13 @@ The results reported in each cell of the  table are the average *PER%* performan
 |M-GRU| 16.1  ± 0.28| ------|  15.2 ± 0.23| 
 |li-GRU| 15.5  ± 0.33| ------|  **14.6** ± 0.32| 
 
-We believe that averaging the performance obtained with different initialization seed is crucial  for TIMIT, since the natural performance variability might completely hide the experimental evidence. 
+We believe that averaging the performance obtained with different initialization seeds is crucial  for TIMIT, since the natural performance variability might completely hide the experimental evidence. 
 
-The main hyperparameters of the models (i.e., learning rate, number of layers, number of hidden neurons, dropout factor) reported in the table have been optimized through a grid search performed on the development set (see the config files for an overview on the hyperparameters adopted for each NN). 
+The main hyperparameters of the models (i.e., learning rate, number of layers, number of hidden neurons, dropout factor) have been optimized through a grid search performed on the development set (see the config files in *cfg/baselines* for an overview on the hyperparameters adopted for each NN). 
 
-The RNN models are bidirectional, use recurrent dropout, and batch normalization is applied to feedforward connections. In order to minimize the need of zero padding when forming minibatches the signals are ordered according to their length.
+The RNN models are bidirectional, use recurrent dropout, and batch normalization is applied to feedforward connections. 
 
-Note that RNN are significantly better than a standard MLP. In particular, the Li-GRU model (see [1,2]) for more details performs slightly better that the other model. As expected fMLLR features lead to the best performance. Note also that the performance of  *14.6%* obtained with our best fMLLR system is, to the best of our knowledge, one of the best performance so far achieved with the TIMIT dataset.
+Note that RNN are significantly better than a standard MLP. In particular, the Li-GRU model (see [1,2] for more details) performs slightly better that the other models. As expected fMLLR features lead to the best performance. The performance of  *14.6%* obtained with our best fMLLR system is, to the best of our knowledge, one of the best results so far achieved with the TIMIT dataset.
 
 For comparison and reference purposes, in the folders  *exp/our_results/TIMIT_{MLP,RNN,LSTM,GRU,M_GRU,liGRU}* you can find the output results obtained by us. 
 
@@ -143,22 +140,22 @@ For comparison and reference purposes, in the folders  *exp/our_results/TIMIT_{M
 
 The main script to run experiments is *run_exp.sh*.  The only parameter that it takes in input is the configuration file, which contains a full description of the data, architecture, optimization and decoding step. The user can use the variable *$cmd* for submitting jobs on HPC clusters.
 
-Each training epoch is divided into many chunks.  The pytorch code run_nn_single_ep.py performs a training over a single training chunk and provided in output a model file in *.pkl* format and a *.info* file that contains various information (such as the current training loss and error). The python code takes in input a config file that reports all the information needed to complete the training of the chunk under processing. 
+Each training epoch is divided into many chunks.  The pytorch code *run_nn_single_ep.py* performs training over a single chunk and provides in output a model file in *.pkl* format and a *.info* file (that contains various information such as the current training loss and error). 
 
-After each training epoch the performance on the dev-set is monitored. If the relative improvement in the error rates  is below a given threshold the learning rate is decreased by the halving factor. The training loop is iterated for the specified number of training epochs. When training is finished, a forward step is carried on for generating the set of posterior probabilities that will be processed by the kaldi decoder. 
+After each training epoch, the performance on the dev-set is monitored. If the relative performance improvement  is below a given threshold, the learning rate is decreased by an halving factor. The training loop is iterated for the specified number of training epochs. When training is finished, a forward step is carried on for generating the set of posterior probabilities that will be processed by the kaldi decoder. 
 
-After the decoding step, the final transcriptions and scores are available in the output folder. If, for some reason, the training procedure is interrupted the process can be resumed starting from the last training chunk  that have been processed by simply re-launching the run_exp.sh script.
+After decoding, the final transcriptions and scores are available in the output folder. If, for some reason, the training procedure is interrupted the process can be resumed starting from the last processed chunk.
 
 
 
 ## Adding customized DNN models
-One can easily write its own customized DNN model and plugs it in neural_nets.py. Similarly to the models already implemented the uses has to write a init method for initializing the DNN parameters and a forward method. The forward method should take in input   the current features x and the corresponding labels lab. It has to provide at the output the loss, the error and the posterior probabilities.  Once the customized DNN has been created, the new model should be imported into the run_nn_single_ep.py file in this way:
+One can easily write its own customized DNN model and plugs it into neural_nets.py. Similarly to the models already implemented the user has to write a *init* method for initializing the DNN parameters and a forward method. The forward method should take in input the current features *x* and the corresponding labels *lab*. It has to provide at the output the loss, the error and the posterior probabilities of the processed minibatch.  Once the customized DNN has been created, the new model should be imported into the *run_nn_single_ep.py* file in this way:
 
 ``` 
 from neural_nets import mydnn as ann
 ``` 
 
-It is also important to properly set the label *rnn=1* if the model is a RNN model and *rnn=0* if it is a feedforward DNNs. Note that RNN models and feed-forward models are based on different feature processing (for RNN models  the features are ordered according to their length, for feed-forward model the features are shuffled.)
+It is also important to properly set the label *rnn=1* if the model is a RNN model and *rnn=0* if it is a feedforward DNNs. Note that RNN and feed-forward models are based on different feature processing (for RNN models  the features are ordered according to their length, for feed-forward DNNs the features are shuffled.)
 
 
 ## References
