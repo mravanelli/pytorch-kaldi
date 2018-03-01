@@ -115,24 +115,35 @@ fMLLR features: PER=16.8%
 
 
 
-## TIMIT results:
+## TIMIT Results:
 
-The results reported in each cell of the  table are the average PER% performance on the test set obtained after running five ASR experiments with different initialization seed. 
+The results reported in each cell of the  table are the average *PER%* performance on the test set obtained after running five ASR experiments with different initialization seed. 
 
-We believe that averaging the performance obtained with different initialization seed is crucial especially for TIMIT, since the natural performance variability (that can be about +- 0.3%) might completely hide the experimental evidence. 
+| Model  | mfcc | fbank | fMLLR | 
+| ------ | -----| ------| ------| 
+|  MLP  | -----| ------| ------| 
+|reluRNN| -----| ------| ------| 
+|LSTM| -----| ------|--- | 
+|GRU| 16.0 ± 0.13| ------|  15.3 ± 0.32| 
+|M-GRU| 16.1  ± 0.28| ------|  15.2 ± 0.23| 
+|li-GRU| 15.5  ± 0.33| ------|  **14.6** ± 0.32| 
 
-The main hyperparameters of the models (i.e., learning rate, number of layers, number of hidden neurons, dropout factor) reported in the table have been optimized through a grid search performed on the development set (see the config files for an overview on the hyperparameters adopted for each NN). The RNN models are bidirectional, use recurrent dropout, and batch normalization is applied to feedforward connections. In order to minimize the need of zero padding when forming minibatches the signals are ordered according to their length.
+We believe that averaging the performance obtained with different initialization seed is crucial  for TIMIT, since the natural performance variability might completely hide the experimental evidence. 
 
-Note that RNN are significantly better than a standard MLP. In particular, the Li-GRU model (see [1,2]) for more details performs slightly better that the other model. As expected fMLLR features lead to the best performance. Note also that the performance of  14.3 obtained with our best system is, to the best of our knowledge, one of the best performance so far achieved with the TIMIT dataset.
+The main hyperparameters of the models (i.e., learning rate, number of layers, number of hidden neurons, dropout factor) reported in the table have been optimized through a grid search performed on the development set (see the config files for an overview on the hyperparameters adopted for each NN). 
 
-For comparison and reference purposes, in the folders  exp/our_results/TIMIT_{MLP,RNN,LSTM,GRU,M_GRU,liGRU} you can find the output results obtained by us. 
+The RNN models are bidirectional, use recurrent dropout, and batch normalization is applied to feedforward connections. In order to minimize the need of zero padding when forming minibatches the signals are ordered according to their length.
+
+Note that RNN are significantly better than a standard MLP. In particular, the Li-GRU model (see [1,2]) for more details performs slightly better that the other model. As expected fMLLR features lead to the best performance. Note also that the performance of  *14.6* obtained with our best fMLLR system is, to the best of our knowledge, one of the best performance so far achieved with the TIMIT dataset.
+
+For comparison and reference purposes, in the folders  *exp/our_results/TIMIT_{MLP,RNN,LSTM,GRU,M_GRU,liGRU}* you can find the output results obtained by us. 
 
 
 ## Brief Overview of the Architecture
 
-The main script to run experiments is “run_exp.sh”.  The only parameter that it takes in input is the configuration file, which contains a full description of the data, architecture, optimization and decoding step. The user can use the variable $cmd for submitting jobs on HPC clusters.
+The main script to run experiments is *run_exp.sh*.  The only parameter that it takes in input is the configuration file, which contains a full description of the data, architecture, optimization and decoding step. The user can use the variable *$cmd* for submitting jobs on HPC clusters.
 
-Each training epoch is divided into many chunks.  The pytorch code run_nn_single_ep.py performs a training over a single training chunk and provided in output a model file in *.pkl format and a *.info file that contains various information (such as the current training loss and error). The python code takes in input a config file that reports all the information needed to complete the training of the chunk under processing. 
+Each training epoch is divided into many chunks.  The pytorch code run_nn_single_ep.py performs a training over a single training chunk and provided in output a model file in *.pkl* format and a *.info* file that contains various information (such as the current training loss and error). The python code takes in input a config file that reports all the information needed to complete the training of the chunk under processing. 
 
 After each training epoch the performance on the dev-set is monitored. If the relative improvement in the error rates  is below a given threshold the learning rate is decreased by the halving factor. The training loop is iterated for the specified number of training epochs. When training is finished, a forward step is carried on for generating the set of posterior probabilities that will be processed by the kaldi decoder. 
 
@@ -143,19 +154,22 @@ After the decoding step, the final transcriptions and scores are available in th
 ## Adding customized DNN models
 One can easily write its own customized DNN model and plugs it in neural_nets.py. Similarly to the models already implemented the uses has to write a init method for initializing the DNN parameters and a forward method. The forward method should take in input   the current features x and the corresponding labels lab. It has to provide at the output the loss, the error and the posterior probabilities.  Once the customized DNN has been created, the new model should be imported into the run_nn_single_ep.py file in this way:
 
+``` 
 from neural_nets import mydnn as ann
+``` 
 
-It is also important to properly set the label rnn=1 if the model is a RNN model and rnn=0 if it is a feedforward DNNs. Note that RNN models and Feed-forward models are based on different feature processing (for RNN models  the features are ordered according to their length, for feed-forward model the features are shuffled.)
+It is also important to properly set the label *rnn=1* if the model is a RNN model and *rnn=0* if it is a feedforward DNNs. Note that RNN models and feed-forward models are based on different feature processing (for RNN models  the features are ordered according to their length, for feed-forward model the features are shuffled.)
 
 
 ## References
 
-[1] M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Improving speech recognition by revising gated recurrent units", in Proceedings of Interspeech 2017
+[1] M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Improving speech recognition by revising gated recurrent units", in Proceedings of Interspeech 2017. [ArXiv](https://arxiv.org/abs/1710.00641)
 
 [2] M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Light Gated Recurrent Units for Speech Recognition", in IEEE Transactions on
-Emerging Topics in Computational Intelligence (to appear)
+Emerging Topics in Computational Intelligence (to appear).
 
-[3] M. Ravanelli, "Deep Learning for Distant Speech Recognition", PhD Thesis, Unitn 2017 
+[3] M. Ravanelli, "Deep Learning for Distant Speech Recognition", PhD Thesis, Unitn 2017. [ArXiv](https://arxiv.org/abs/1712.06086)
+  
 
 
 
