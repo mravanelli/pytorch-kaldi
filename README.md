@@ -134,7 +134,7 @@ The main hyperparameters of the models (i.e., learning rate, number of layers, n
 
 The RNN models are bidirectional, use recurrent dropout, and batch normalization is applied to feedforward connections. In order to minimize the need of zero padding when forming minibatches the signals are ordered according to their length.
 
-Note that RNN are significantly better than a standard MLP. In particular, the Li-GRU model (see [1,2]) for more details performs slightly better that the other model. As expected fMLLR features lead to the best performance. Note also that the performance of  *14.6* obtained with our best fMLLR system is, to the best of our knowledge, one of the best performance so far achieved with the TIMIT dataset.
+Note that RNN are significantly better than a standard MLP. In particular, the Li-GRU model (see [1,2]) for more details performs slightly better that the other model. As expected fMLLR features lead to the best performance. Note also that the performance of  *14.6%* obtained with our best fMLLR system is, to the best of our knowledge, one of the best performance so far achieved with the TIMIT dataset.
 
 For comparison and reference purposes, in the folders  *exp/our_results/TIMIT_{MLP,RNN,LSTM,GRU,M_GRU,liGRU}* you can find the output results obtained by us. 
 
