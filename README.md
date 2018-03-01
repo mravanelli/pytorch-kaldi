@@ -4,12 +4,12 @@ pytorch-kaldi is a public repository for developing state-of-the-art DNN/RNN hyb
 
 ## Introduction:
 This project releases a collection of codes and utilities to develop state-of-the-art DNN/RNN hybrid speech recognition systems. The DNN/RNN part is implemented in pytorch, while feature extraction, alignments, and decoding are performed with the Kaldi toolkit.  The current version of the provided system has the following features:
-- Supports different types of NNs (e.g., *MLP*, *RNN*, *LSTM*, *GRU*, *Minimal GRU*, *Light GRU*)
+- Supports different types of NNs (e.g., *MLP*, *RNN*, *LSTM*, *GRU*, *Minimal GRU*, *Light GRU*) [1,2,3]
 - Supports  recurrent dropout
 - Supports  batch and layer normalization
 - Supports unidirectional/bidirectional RNNs
 - Supports  residual/skip connections
-- Supports  twin regularization
+- Supports  twin regularization [4]
 - python2/python3 compatibility
 - multi-gpu training
 - recovery/saving checkpoints
@@ -34,7 +34,7 @@ add PYTHONPATH=${PYTHONPATH}: to $HOME/.bashrc
 ``` 
 Type *import kaldi_io* into the python console and make sure the package is correctly imported. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
 
-- The implementation of the RNN models sorts the training sentences according to their length. This allows the system to minimize the need of zero padding when forming minibatches. The duration of each sentence is extracted using sox. Please, make sure it is installed (it is only used when generating the feature lists in the *create_chunk.sh*)
+- The implementation of the RNN models sorts the training sentences according to their length. This allows the system to minimize the need of zero padding when forming minibatches. The duration of each sentence is extracted using *sox*. Please, make sure it is installed (it is only used when generating the feature lists in *create_chunk.sh*)
 
 
 ## How to run a TIMIT experiment:
@@ -42,7 +42,10 @@ Even though the code can be easily adapted to any speech dataset, in the followi
 
 1. Run the Kaldi s5 baseline of TIMIT.
 This step is necessary to compute features and labels later used to train the pytorch MLP. In particular:
-go to *$KALDI_ROOT/egs/timit/s5* and run the script *run.sh*. Make sure everything works fine. Please, also run the Karel’s DNN baseline using *local/nnet/run_dnn.sh*. Do not forget to compute the alignments for test and dev data with the following commands.
+- go to *$KALDI_ROOT/egs/timit/s5* and run the script *run.sh*. 
+- Make sure everything works fine. 
+- Please, also run the Karel’s DNN baseline using *local/nnet/run_dnn.sh*. 
+- Do not forget to compute the alignments for test and dev data with the following commands.
 If you wanna use tri3 alignments, type:
 ``` 
 steps/align_fmllr.sh --nj 4 data/dev data/lang exp/tri3 exp/tri3_ali_dev
@@ -58,7 +61,8 @@ steps/nnet/align.sh --nj 4 data-fmllr-tri3/test data/lang exp/dnn4_pretrain-dbn_
 ``` 
 
 2. Split the feature lists into chunks.
-Go to the *pytorch-kaldi* folder. The script *create_chunks.sh* first shuffles or sorts (based on the sentence length) a kaldi feature list and then split it into a certain number of chunks. Shuffling a list could be good for feed-forward DNNs, while a sorted list can be useful for RNNs (for minimizing the need of zero-padding when forming minibatches). The code also computes per-speaker and per-sentence CMVN.
+- Go to the *pytorch-kaldi* folder. 
+- The script *create_chunks.sh* first shuffles or sorts (based on the sentence length) a kaldi feature list and then split it into a certain number of chunks. Shuffling a list could be good for feed-forward DNNs, while a sorted list can be useful for RNNs (for minimizing the need of zero-padding when forming minibatches). The code also computes per-speaker and per-sentence CMVN.
 
 For shuffled mfcc features run:
 ``` 
@@ -77,21 +81,22 @@ For ordered mfcc features run:
 
 
 3. Setup the Config file.
-Go into the *cfg* folder, open a config file (e.g,*TIMIT_MLP.cfg*,*TIMIT_GRU.cfg*) and modify it according to your paths:
+- Go into the *cfg* folder
+- open a config file (e.g,*TIMIT_MLP.cfg*,*TIMIT_GRU.cfg*) and modify it according to your paths:
 - *tr_fea_scp* contains the list of features created with create_chunks.sh.
 - *tr_fea_opts* allows users to easily add normalizations, derivatives and other types of feature processing.
 - *tr_lab_folder* is the kaldi folder containing the alignments (labels).
 - *tr_lab_opts* allows users to derive context-dependent phone targets (when set to *ali-to-pdf*) or monophone targets (when set to *ali-to-phones --per-frame*).
-Please, modify the paths for dev and test data as well.
+- Please, modify the paths for dev and test data as well.
 
-Feel free to modify the DNN architecture and the other optimization parameters according to your needs.
+- Feel free to modify the DNN architecture and the other optimization parameters according to your needs.
 The required *count_file* (used to normalize the DNN posteriors before feeding the decoder and automatically created by kaldi when running s5 recipe) can be found here: *$KALDI_ROOT/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn/ali_train_pdf.counts*.
 
-Use the option *use_cuda=1* for running the code on a GPU (strongly suggested).
-Use the option *save_gpumem=0* to save gpu memory. The code will be a little bit slower (about 10-15%), but it saves gpu memory. 
+- Use the option *use_cuda=1* for running the code on a GPU (strongly suggested).
+- Use the option *save_gpumem=0* to save gpu memory. The code will be a little bit slower (about 10-15%), but it saves gpu memory. 
 
 4. Run the experiment.
-Type the following command to run DNN training:
+- Type the following command to run DNN training:
 ``` 
 ./run_exp.sh cfg/baselines/TIMIT_MLP.cfg > log.log 
 ``` 
@@ -166,6 +171,8 @@ It is also important to properly set the label *rnn=1* if the model is a RNN mod
 Emerging Topics in Computational Intelligence (to appear).
 
 [3] M. Ravanelli, "Deep Learning for Distant Speech Recognition", PhD Thesis, Unitn 2017. [ArXiv](https://arxiv.org/abs/1712.06086)
+
+[4] D. Serdyuk, R. Nan Ke, A. Sordoni, A. Trischler, C. Pal, Y. Bengio, "Twin Networks: Matching the Future for Sequence Generation", ICLR 2018 [ArXiv](https://arxiv.org/pdf/1708.06742.pdf)
   
 
 
