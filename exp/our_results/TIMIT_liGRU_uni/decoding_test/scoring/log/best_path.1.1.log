@@ -1,0 +1,10 @@
+# lattice-align-phones /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/../final.mdl "ark:gunzip -c /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/lat.1.gz|" ark:- | lattice-to-ctm-conf --acoustic-scale=1.00000000 --lm-scale=1.0 ark:- /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/scoring/1.1.ctm 
+# Started at Tue Feb 27 09:08:58 PST 2018
+#
+lattice-align-phones /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/../final.mdl 'ark:gunzip -c /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/lat.1.gz|' ark:- 
+lattice-to-ctm-conf --acoustic-scale=1.00000000 --lm-scale=1.0 ark:- /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/scoring/1.1.ctm 
+LOG (lattice-align-phones[5.4.10~1-f629b]:main():lattice-align-phones.cc:104) Successfully aligned 0 lattices; 0 had errors.
+LOG (lattice-to-ctm-conf[5.4.10~1-f629b]:main():lattice-to-ctm-conf.cc:181) Done 0 lattices.
+LOG (lattice-to-ctm-conf[5.4.10~1-f629b]:main():lattice-to-ctm-conf.cc:182) Overall average Bayes Risk per sentence is -nan and per word, -nan
+# Accounting: time=3 threads=1
+# Ended (code 1) at Tue Feb 27 09:09:01 PST 2018, elapsed time 3 seconds

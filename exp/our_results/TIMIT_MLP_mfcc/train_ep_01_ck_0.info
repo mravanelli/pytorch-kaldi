@@ -1,0 +1,5 @@
+model_in=none
+fea_in=/home/mirco/pytorch-kaldi/mfcc_shu/train_split.000
+loss=5.363038
+err=0.882768
+elapsed_time=19.493650

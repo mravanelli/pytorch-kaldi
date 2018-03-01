@@ -1,0 +1,5 @@
+# mkdir /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/score_1 ; cat /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/scoring/1.ctm | utils/int2sym.pl -f 5 /home/ravanelm/kaldi-trunk/egs/timit_s5_git/exp/tri3/graph/words.txt | local/timit_norm_trans.pl -i - -m conf/phones.60-48-39.map -from 48 -to 39 > /scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/decoding_test/scoring/1.ctm_39phn 
+# Started at Tue Feb 27 08:47:45 PST 2018
+#
+# Accounting: time=1 threads=1
+# Ended (code 0) at Tue Feb 27 08:47:46 PST 2018, elapsed time 1 seconds

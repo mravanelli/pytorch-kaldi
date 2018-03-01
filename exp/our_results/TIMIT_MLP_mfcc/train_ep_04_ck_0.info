@@ -1,0 +1,5 @@
+model_in=exp/TIMIT_MLP_mfcc/train_ep_03_ck_4.pkl
+fea_in=/home/mirco/pytorch-kaldi/mfcc_shu/train_split.000
+loss=1.824441
+err=0.510086
+elapsed_time=19.382717

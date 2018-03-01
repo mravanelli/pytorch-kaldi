@@ -1,0 +1,5 @@
+model_in=none
+fea_in=/home/ravanelm/pytorch_exp/mfcc_train_ord/train_split.000
+loss=6.971737
+err=0.905323
+elapsed_time=77.006082

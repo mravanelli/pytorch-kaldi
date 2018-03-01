@@ -1,0 +1,10 @@
+# ali-to-pdf /home/ravanelm/kaldi-trunk/egs/timit_s5_git/exp/dnn4_pretrain-dbn_dnn_ali/final.mdl "ark:gunzip -c /home/ravanelm/kaldi-trunk/egs/timit_s5_git/exp/dnn4_pretrain-dbn_dnn_ali/ali.*.gz |" ark:- | analyze-counts --binary=false ark:- /scratch/ravanelm/exp/TIMIT_GRU_official_v3/decoding_test/class.counts 
+# Started at Mon Feb 26 14:24:54 PST 2018
+#
+ali-to-pdf /home/ravanelm/kaldi-trunk/egs/timit_s5_git/exp/dnn4_pretrain-dbn_dnn_ali/final.mdl 'ark:gunzip -c /home/ravanelm/kaldi-trunk/egs/timit_s5_git/exp/dnn4_pretrain-dbn_dnn_ali/ali.*.gz |' ark:- 
+analyze-counts --binary=false ark:- /scratch/ravanelm/exp/TIMIT_GRU_official_v3/decoding_test/class.counts 
+LOG (ali-to-pdf[5.4.10~1-f629b]:main():ali-to-pdf.cc:68) Converted 3696 alignments to pdf sequences.
+LOG (analyze-counts[5.4.10~1-f629b]:main():analyze-counts.cc:194) Summed 3696 int32 vectors to counts, skipped 0 vectors.
+LOG (analyze-counts[5.4.10~1-f629b]:main():analyze-counts.cc:196) Counts written to /scratch/ravanelm/exp/TIMIT_GRU_official_v3/decoding_test/class.counts
+# Accounting: time=6 threads=1
+# Ended (code 0) at Mon Feb 26 14:25:00 PST 2018, elapsed time 6 seconds

@@ -1,0 +1,5 @@
+model_in=/scratch/ravanelm/exp/TIMIT_liGRU_official_uni_v3/train_ep_13_ck_1.pkl
+fea_in=/home/ravanelm/pytorch_exp/mfcc_train_ord/train_split.002
+loss=1.215843
+err=0.369565
+elapsed_time=114.338395

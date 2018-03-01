@@ -1,0 +1,5 @@
+model_in=/scratch/jvb-000-ag/ravanelm/exp/TIMIT_liGRU_fmllr_official_v1/train_ep_03_ck_4.pkl
+fea_in=/home/ravanelm/pytorch_exp/fmllr_test/test_split.000
+loss=1.464269
+err=0.407382
+elapsed_time=149.591461

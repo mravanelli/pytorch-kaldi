@@ -1,0 +1,7 @@
+copy-feats scp:/home/mirco/pytorch-kaldi/mfcc_shu/test_split.000 ark:- 
+add-deltas --delta-order=2 ark:- ark:- 
+apply-cmvn --utt2spk=ark:/home/mirco/kaldi-trunk/egs/timit/s5/data/test/utt2spk ark:/home/mirco/pytorch_exp/splits_fea/test_cmvn_speaker.ark ark:- ark:- 
+LOG (copy-feats[5.3.42~1-3c21]:main():copy-feats.cc:143) Copied 192 feature matrices.
+LOG (apply-cmvn[5.3.42~1-3c21]:main():apply-cmvn.cc:162) Applied cepstral mean normalization to 192 utterances, errors on 0
+ali-to-pdf /home/mirco/kaldi-trunk/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn_ali_test/final.mdl ark:- ark:- 
+LOG (ali-to-pdf[5.3.42~1-3c21]:main():ali-to-pdf.cc:68) Converted 192 alignments to pdf sequences.

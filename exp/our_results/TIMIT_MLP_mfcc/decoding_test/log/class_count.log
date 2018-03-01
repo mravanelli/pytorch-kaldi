@@ -1,0 +1,10 @@
+# ali-to-pdf /home/mirco/kaldi-trunk/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn_ali/final.mdl "ark:gunzip -c /home/mirco/kaldi-trunk/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn_ali/ali.*.gz |" ark:- | analyze-counts --binary=false ark:- ../exp/TIMIT_MLP_mfcc/decoding_test/class.counts 
+# Started at Thu Mar  1 11:11:59 EST 2018
+#
+ali-to-pdf /home/mirco/kaldi-trunk/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn_ali/final.mdl 'ark:gunzip -c /home/mirco/kaldi-trunk/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn_ali/ali.*.gz |' ark:- 
+analyze-counts --binary=false ark:- ../exp/TIMIT_MLP_mfcc/decoding_test/class.counts 
+LOG (ali-to-pdf[5.3.42~1-3c21]:main():ali-to-pdf.cc:68) Converted 3696 alignments to pdf sequences.
+LOG (analyze-counts[5.3.42~1-3c21]:main():analyze-counts.cc:194) Summed 3696 int32 vectors to counts, skipped 0 vectors.
+LOG (analyze-counts[5.3.42~1-3c21]:main():analyze-counts.cc:196) Counts written to ../exp/TIMIT_MLP_mfcc/decoding_test/class.counts
+# Accounting: time=1 threads=1
+# Ended (code 0) at Thu Mar  1 11:12:00 EST 2018, elapsed time 1 seconds

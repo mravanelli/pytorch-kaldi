@@ -1,0 +1,5 @@
+# mkdir ../exp/TIMIT_MLP_mfcc/decoding_test/score_3 ; cat ../exp/TIMIT_MLP_mfcc/decoding_test/scoring/3.ctm | utils/int2sym.pl -f 5 /home/mirco/kaldi-trunk/egs/timit/s5/exp/tri3/graph/words.txt | local/timit_norm_trans.pl -i - -m conf/phones.60-48-39.map -from 48 -to 39 > ../exp/TIMIT_MLP_mfcc/decoding_test/scoring/3.ctm_39phn 
+# Started at Thu Mar  1 11:13:36 EST 2018
+#
+# Accounting: time=1 threads=1
+# Ended (code 0) at Thu Mar  1 11:13:37 EST 2018, elapsed time 1 seconds

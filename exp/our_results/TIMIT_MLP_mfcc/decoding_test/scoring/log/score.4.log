@@ -1,0 +1,407 @@
+# cp ../exp/TIMIT_MLP_mfcc/decoding_test/scoring/stm_39phn ../exp/TIMIT_MLP_mfcc/decoding_test/score_4/stm_39phn && cp ../exp/TIMIT_MLP_mfcc/decoding_test/scoring/4.ctm_39phn ../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn && /home/mirco/kaldi-trunk/tools/sctk/bin/hubscr.pl -p /home/mirco/kaldi-trunk/tools/sctk/bin -V -l english -h hub5 -g ../exp/TIMIT_MLP_mfcc/decoding_test/scoring/glm_39phn -r ../exp/TIMIT_MLP_mfcc/decoding_test/score_4/stm_39phn ../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn 
+# Started at Thu Mar  1 11:13:37 EST 2018
+#
+Filtering Files:
+   Filtering english file '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/stm_39phn', stm format
+   Filtering english file '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn', ctm format
+Scoring english Hyp '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt' against ref '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/stm_39phn.filt'
+sclite: 2.10 TK Version 1.3
+Begin alignment of Ref File: '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/stm_39phn.filt' and Hyp File: '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt'
+    Performing alignments for file 'fdhc0_si1559'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fdhc0_si2189'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fdhc0_si929'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fdhc0_sx119'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fdhc0_sx209'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fdhc0_sx29'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fdhc0_sx299'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fdhc0_sx389'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'felc0_si1386'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'felc0_si2016'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'felc0_si756'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'felc0_sx126'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'felc0_sx216'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'felc0_sx306'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'felc0_sx36'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'felc0_sx396'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fjlm0_si1043'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fjlm0_si1673'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fjlm0_si2303'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fjlm0_sx143'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fjlm0_sx233'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fjlm0_sx323'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fjlm0_sx413'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fjlm0_sx53'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmgd0_si1564'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmgd0_si2194'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmgd0_si934'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmgd0_sx124'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmgd0_sx214'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmgd0_sx304'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmgd0_sx34'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmgd0_sx394'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmld0_si2185'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmld0_si822'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmld0_si925'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmld0_sx115'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmld0_sx205'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmld0_sx25'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmld0_sx295'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fmld0_sx385'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fnlp0_si1308'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fnlp0_si1938'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fnlp0_si678'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fnlp0_sx138'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fnlp0_sx228'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fnlp0_sx318'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fnlp0_sx408'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fnlp0_sx48'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpas0_si1272'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpas0_si2204'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpas0_si944'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpas0_sx134'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpas0_sx224'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpas0_sx314'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpas0_sx404'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpas0_sx44'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpkt0_si1538'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpkt0_si2168'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpkt0_si908'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpkt0_sx188'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpkt0_sx278'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpkt0_sx368'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpkt0_sx8'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'fpkt0_sx98'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mbpm0_si1577'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mbpm0_si1584'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mbpm0_si947'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mbpm0_sx137'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mbpm0_sx227'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mbpm0_sx317'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mbpm0_sx407'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mbpm0_sx47'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mcmj0_si1094'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mcmj0_si464'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mcmj0_si602'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mcmj0_sx104'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mcmj0_sx14'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mcmj0_sx194'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mcmj0_sx284'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mcmj0_sx374'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mdab0_si1039'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mdab0_si1669'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mdab0_si2299'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mdab0_sx139'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mdab0_sx229'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mdab0_sx319'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mdab0_sx409'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mdab0_sx49'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mgrt0_si1450'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mgrt0_si2080'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mgrt0_si820'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mgrt0_sx10'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mgrt0_sx100'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mgrt0_sx190'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mgrt0_sx280'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mgrt0_sx370'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjdh0_si1354'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjdh0_si1984'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjdh0_si724'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjdh0_sx184'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjdh0_sx274'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjdh0_sx364'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjdh0_sx4'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjdh0_sx94'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjln0_si1449'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjln0_si2079'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjln0_si819'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjln0_sx189'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjln0_sx279'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjln0_sx369'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjln0_sx9'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjln0_sx99'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjmp0_si1535'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjmp0_si1791'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjmp0_si905'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjmp0_sx185'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjmp0_sx275'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjmp0_sx365'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjmp0_sx5'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mjmp0_sx95'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mklt0_si1213'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mklt0_si1843'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mklt0_si583'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mklt0_sx133'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mklt0_sx223'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mklt0_sx313'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mklt0_sx403'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mklt0_sx43'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlll0_si1363'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlll0_si1993'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlll0_si733'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlll0_sx103'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlll0_sx13'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlll0_sx193'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlll0_sx283'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlll0_sx373'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlnt0_si1574'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlnt0_si1902'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlnt0_si642'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlnt0_sx102'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlnt0_sx12'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlnt0_sx192'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlnt0_sx282'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mlnt0_sx372'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mnjm0_si1580'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mnjm0_si2210'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mnjm0_si950'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mnjm0_sx140'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mnjm0_sx230'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mnjm0_sx320'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mnjm0_sx410'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mnjm0_sx50'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mpam0_si1189'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mpam0_si1819'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mpam0_si1961'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mpam0_sx109'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mpam0_sx19'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mpam0_sx199'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mpam0_sx289'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mpam0_sx379'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtas1_si1473'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtas1_si2098'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtas1_si838'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtas1_sx118'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtas1_sx208'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtas1_sx28'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtas1_sx298'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtas1_sx388'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtls0_si1370'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtls0_si2000'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtls0_si740'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtls0_sx110'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtls0_sx20'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtls0_sx200'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtls0_sx290'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mtls0_sx380'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwbt0_si1553'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwbt0_si2183'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwbt0_si923'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwbt0_sx113'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwbt0_sx203'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwbt0_sx23'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwbt0_sx293'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwbt0_sx383'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwew0_si1361'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwew0_si1991'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwew0_si731'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwew0_sx101'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwew0_sx11'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwew0_sx191'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwew0_sx281'.
+        1 of 1 Segments For Channel 1.     
+    Performing alignments for file 'mwew0_sx371'.
+        1 of 1 Segments For Channel 1.     
+    Writing scoring report to '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.sys'
+    Writing raw scoring report to '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.raw'
+    Writing overall detailed scoring report '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.dtl'
+    Writing LUR scoring report to '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.lur'
+    Writing string alignments to '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.pra'
+    Writing string alignments to '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.prf'
+    Writing SGML string alignments to '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.sgml'
+    Writing DET Curve to '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.det.[plt,dat]'
+    Writing Confidence Histogram '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.hist.[plt,dat]'
+    Writing Scaled Binned Histogram '../exp/TIMIT_MLP_mfcc/decoding_test/score_4/ctm_39phn.filt.sbhist.[plt,dat]'
+
+Successful Completion
+# Accounting: time=2 threads=1
+# Ended (code 0) at Thu Mar  1 11:13:39 EST 2018, elapsed time 2 seconds

@@ -1,0 +1,7 @@
+add-deltas --delta-order=2 ark:- ark:- 
+apply-cmvn --utt2spk=ark:/home/ravanelm/kaldi-trunk/egs/timit_s5_git/data/test/utt2spk ark:/home/ravanelm/pytorch_exp/mfcc_test/test_cmvn_speaker.ark ark:- ark:- 
+copy-feats scp:/home/ravanelm/pytorch_exp/mfcc_test/test_split.000 ark:- 
+LOG (copy-feats[5.4.10~1-f629b]:main():copy-feats.cc:143) Copied 192 feature matrices.
+LOG (apply-cmvn[5.4.10~1-f629b]:main():apply-cmvn.cc:162) Applied cepstral mean normalization to 192 utterances, errors on 0
+ali-to-pdf /home/ravanelm/kaldi-trunk/egs/timit_s5_git/exp/dnn4_pretrain-dbn_dnn_ali_test/final.mdl ark:- ark:- 
+LOG (ali-to-pdf[5.4.10~1-f629b]:main():ali-to-pdf.cc:68) Converted 192 alignments to pdf sequences.
