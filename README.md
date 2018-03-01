@@ -91,11 +91,11 @@ Use the option *save_gpumem=0* to save gpu memory. The code will be a little bit
 4. Run the experiment.
 Type the following command to run DNN training:
 ``` 
-./run_exp.sh cfg/TIMIT_MLP.cfg > log.log 
+./run_exp.sh cfg/baselines/TIMIT_MLP.cfg > log.log 
 ``` 
 or 
 ``` 
-./run_exp.sh cfg/TIMIT_GRU.cfg > log.log 
+./run_exp.sh cfg/baselines/TIMIT_GRU.cfg > log.log 
 ``` 
 
 Note that run_exp performs a full ASR experiment (training, forward and decoding).
