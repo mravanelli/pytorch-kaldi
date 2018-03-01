@@ -97,7 +97,8 @@ $KALDI_ROOT/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn/ali_train_pdf.counts
 ``` 
 
 - Use the option *use_cuda=1* for running the code on a GPU (strongly suggested).
-- Use the option *save_gpumem=0* to save gpu memory. The code will be a little bit slower (about 10-15%), but it saves gpu memory. 
+- Use the option *save_gpumem=0* to save gpu memory. The code will be a little bit slower (about 10-15%), but it saves gpu memory.
+- See *config_description.cfg* for a more detailed description of all the possible options.
 
 4. Run the experiment.
 - Type the following command to run DNN training:
