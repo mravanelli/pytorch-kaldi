@@ -62,7 +62,7 @@ steps/nnet/align.sh --nj 4 data-fmllr-tri3/test data/lang exp/dnn4_pretrain-dbn_
 
 2. Split the feature lists into chunks.
 - Go to the *pytorch-kaldi* folder. 
-- The script *create_chunks.sh* first shuffles or sorts (based on the sentence length) a kaldi feature list and then split it into a certain number of chunks. Shuffling a list could be good for feed-forward DNNs, while a sorted list can be useful for RNNs (for minimizing the need of zero-padding when forming minibatches). The code also computes per-speaker and per-sentence CMVN.
+- The script *create_chunks.sh* first shuffles or sorts (according to the sentence length) a kaldi feature list and then split it into a certain number of chunks. Shuffling a list could be good for feed-forward DNNs, while a sorted list can be useful for RNNs (for minimizing the need of zero-padding when forming minibatches). The code also computes per-speaker and per-sentence CMVN.
 
 For shuffled mfcc features run:
 ``` 
@@ -90,7 +90,11 @@ For ordered mfcc features run:
 - Please, modify the paths for dev and test data as well.
 
 - Feel free to modify the DNN architecture and the other optimization parameters according to your needs.
-The required *count_file* (used to normalize the DNN posteriors before feeding the decoder and automatically created by kaldi when running s5 recipe) can be found here: *$KALDI_ROOT/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn/ali_train_pdf.counts*.
+The required *count_file* (used to normalize the DNN posteriors before feeding the decoder and automatically created by kaldi when running s5 recipe) can be found here:
+
+``` 
+$KALDI_ROOT/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn/ali_train_pdf.counts
+``` 
 
 - Use the option *use_cuda=1* for running the code on a GPU (strongly suggested).
 - Use the option *save_gpumem=0* to save gpu memory. The code will be a little bit slower (about 10-15%), but it saves gpu memory. 
@@ -112,14 +116,18 @@ Take a look to *exp/our_results* for taking a look to the results you should obt
 
 - a folder *decode_test* containing the speech recognition results. If you type *./RESULTS* you should be able to see the Phone Error Rate (PER%) for each experiment. 
 - the model *.pkl* is the final model used for speech decoding.
-- the files *.info* reports loss and error performance for each training chunk.
+- the files *.info* report loss and error performance for each training chunk.
 - the file *log.log* contains possible errors occurred in the training procedure.
 
 
 
 ## TIMIT Results:
 
-The results reported in each cell of the  table are the average *PER%* performance obtained  on the test set  after running five ASR experiments with different initialization seeds. 
+The results reported in each cell of the  table are the average *PER%* performance obtained  on the test set  after running five ASR experiments with different initialization seeds. We believe that averaging the performance obtained with different initialization seeds is crucial  for TIMIT, since the natural performance variability might completely hide the experimental evidence.  
+
+The main hyperparameters of the models (i.e., learning rate, number of layers, number of hidden neurons, dropout factor) have been optimized through a grid search performed on the development set (see the config files in *cfg/baselines* for an overview on the hyperparameters adopted for each NN). 
+
+The RNN models are bidirectional, use recurrent dropout, and batch normalization is applied to feedforward connections. 
 
 | Model  | mfcc | fbank | fMLLR | 
 | ------ | -----| ------| ------| 
@@ -130,15 +138,10 @@ The results reported in each cell of the  table are the average *PER%* performan
 |M-GRU| 16.1  ± 0.28| ------|  15.2 ± 0.23| 
 |li-GRU| 15.5  ± 0.33| ------|  **14.6** ± 0.32| 
 
-We believe that averaging the performance obtained with different initialization seeds is crucial  for TIMIT, since the natural performance variability might completely hide the experimental evidence. 
 
-The main hyperparameters of the models (i.e., learning rate, number of layers, number of hidden neurons, dropout factor) have been optimized through a grid search performed on the development set (see the config files in *cfg/baselines* for an overview on the hyperparameters adopted for each NN). 
+The RNN architectures are significantly better than the MLP one. In particular, the Li-GRU model (see [1,2] for more details) performs slightly better that the other models. As expected fMLLR features lead to the best performance. The performance of  *14.6%* obtained with our best fMLLR system is, to the best of our knowledge, one of the best results so far achieved with the TIMIT dataset.
 
-The RNN models are bidirectional, use recurrent dropout, and batch normalization is applied to feedforward connections. 
-
-Note that RNN are significantly better than a standard MLP. In particular, the Li-GRU model (see [1,2] for more details) performs slightly better that the other models. As expected fMLLR features lead to the best performance. The performance of  *14.6%* obtained with our best fMLLR system is, to the best of our knowledge, one of the best results so far achieved with the TIMIT dataset.
-
-For comparison and reference purposes, in the folders  *exp/our_results/TIMIT_{MLP,RNN,LSTM,GRU,M_GRU,liGRU}* you can find the output results obtained by us. 
+For comparison and reference purposes,  you can find the output results obtained by us in the folders  *exp/our_results/TIMIT_{MLP,RNN,LSTM,GRU,M_GRU,liGRU}*. 
 
 
 ## Brief Overview of the Architecture
@@ -154,7 +157,7 @@ After decoding, the final transcriptions and scores are available in the output 
 
 
 ## Adding customized DNN models
-One can easily write its own customized DNN model and plugs it into neural_nets.py. Similarly to the models already implemented the user has to write a *init* method for initializing the DNN parameters and a forward method. The forward method should take in input the current features *x* and the corresponding labels *lab*. It has to provide at the output the loss, the error and the posterior probabilities of the processed minibatch.  Once the customized DNN has been created, the new model should be imported into the *run_nn_single_ep.py* file in this way:
+One can easily write its own customized DNN model and plugs it into neural_nets.py. Similarly to the models already implemented, the user has to write a *init* method for initializing the DNN parameters and a forward method. The forward method should take in input the current features *x* and the corresponding labels *lab*. It has to provide at the output the loss, the error and the posterior probabilities of the processed minibatch.  Once the customized DNN has been created, the new model should be imported into the *run_nn_single_ep.py* file in this way:
 
 ``` 
 from neural_nets import mydnn as ann
