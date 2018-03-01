@@ -76,10 +76,10 @@ For ordered mfcc features run:
 
 3. Setup the Config file.
 Go into the cfg folder, open a config file (e.g,*TIMIT_MLP.cfg*,*TIMIT_GRU.cfg*) and modify it according to your paths:
--*tr_fea_scp* contains the list of features created with create_chunks.sh.
--*tr_fea_opts* allows users to easily add normalizations, derivatives and other types of feature processing.
--*tr_lab_folder* is the kaldi folder containing the alignments (labels).
--*tr_lab_opts* allows users to derive context-dependent phone targets (when set to *ali-to-pdf*) or monophone targets (when set to *ali-to-phones --per-frame*).
+- *tr_fea_scp* contains the list of features created with create_chunks.sh.
+- *tr_fea_opts* allows users to easily add normalizations, derivatives and other types of feature processing.
+- *tr_lab_folder* is the kaldi folder containing the alignments (labels).
+- *tr_lab_opts* allows users to derive context-dependent phone targets (when set to *ali-to-pdf*) or monophone targets (when set to *ali-to-phones --per-frame*).
 Please, modify the paths for dev and test data as well.
 
 Feel free to modify the DNN architecture and the other optimization parameters according to your needs.
@@ -100,18 +100,18 @@ or
 
 Note that run_exp performs a full ASR experiment (training, forward and decoding).
 If everything is working fine, you should find the following files in in the output folder:
--a file *res.res* summarizing the training and eval performance over the various epochs. 
+- a file *res.res* summarizing the training and eval performance over the various epochs. 
 For the MFCC experiment you should obtain something like this:
 For the GRU experiment you should obtain something like this:
 
--a folder *decode_test* containing the speech recognition results. If you type *./RESULTS* you should be able to see the Phone Error Rate (PER%) for each experiment. For instance:
+- a folder *decode_test* containing the speech recognition results. If you type *./RESULTS* you should be able to see the Phone Error Rate (PER%) for each experiment. For instance:
 ``` 
 mfcc features: PER=18.0%
 fMLLR features: PER=16.8%
 ``` 
--the model *.pkl* is the final model used for speech decoding
--the files *.info* reports loss and error performance for each training chunk
--the file *log.log* contains possible errors occurred in the training procedure.
+- the model *.pkl* is the final model used for speech decoding
+- the files *.info* reports loss and error performance for each training chunk
+- the file *log.log* contains possible errors occurred in the training procedure.
 
 
 
