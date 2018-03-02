@@ -132,6 +132,7 @@ The RNN models are bidirectional, use recurrent dropout, and batch normalization
 
 | Model  | mfcc | fbank | fMLLR | 
 | ------ | -----| ------| ------| 
+|  Kaldi DNN Baseline | -----| ------| 18.5 |
 |  MLP  | -----| ------| ------| 
 |reluRNN| -----| ------| ------| 
 |LSTM| -----| ------|--- | 
