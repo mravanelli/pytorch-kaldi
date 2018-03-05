@@ -11,12 +11,8 @@
 # This code implements with pytorch a basic MLP  for speech recognition. 
 # It exploits an interface to  kaldi for feature computation and decoding. 
 # How to run it:
-# python MLP_speech.py --cfg TIMIT_MLP.cfg
+# python run_nn.py --cfg TIMIT_MLP.cfg
 
-# TO DO:
-# - scrivi codice semplificato per epoca singola
-# - fai test approfonditi per valutare consistenza risultati
-# - verifica prestazioni (helios,azure)
 
 
 
