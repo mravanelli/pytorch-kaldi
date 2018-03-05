@@ -34,7 +34,7 @@ if [ "$ord" = "1" ]; then
  cat $data_folder/wav.scp | \
  while read -r line ; do
     id="$(echo $line | awk '{print $1}')"
-    file="$(echo $line | awk -F '.wav' '{printf "%s.wav\n", $2}')"
+    file="$(echo $line | awk '{gsub(/\|/,"");print $NF}')"
     len="$(soxi -D $file)"
     echo $len
   done > $data_folder/file_len.scp
