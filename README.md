@@ -134,11 +134,10 @@ The RNN models are bidirectional, use recurrent dropout, and batch normalization
 | ------ | -----| ------| ------| 
 |  Kaldi DNN Baseline | -----| ------| 18.5 |
 |  MLP  | 18.2 ± 0.19| 18.6 ± 0.24| 16.9 ± 0.19| 
-|reluRNN| -----| ------| ------| 
-|LSTM| -----| ------|--- | 
-|GRU| 16.0 ± 0.13| ------|  15.3 ± 0.32| 
-|M-GRU| 16.1  ± 0.28| ------|  15.2 ± 0.23| 
-|li-GRU| 15.5  ± 0.33| ------|  **14.6** ± 0.32| 
+|LSTM| 15.7 ± 0.27 | 15.1 ± 0.26 |14.7 ± 0.16 | 
+|GRU| 16.0 ± 0.13| 15.3 ± 0.27 |  15.3 ± 0.32| 
+|M-GRU| 16.1  ± 0.28| 15.4 ± 0.11|  15.2 ± 0.23| 
+|li-GRU| **15.5**  ± 0.33| **14.6** ± 0.10|  **14.6** ± 0.32| 
 
 
 The RNN architectures are significantly better than the MLP one. In particular, the Li-GRU model (see [1,2] for more details) performs slightly better that the other models. As expected fMLLR features lead to the best performance. The performance of  *14.6%* obtained with our best fMLLR system is, to the best of our knowledge, one of the best results so far achieved with the TIMIT dataset.
