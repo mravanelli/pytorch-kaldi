@@ -201,6 +201,10 @@ for i in range(N_batches):
     
    
    [loss,err,pout] = net(inp,lab,test_flag)
+   
+   if multi_gpu:
+     loss=loss.mean()
+     err=err.mean()
 
    if do_forward:
     if rnn==1:
