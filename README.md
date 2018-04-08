@@ -78,6 +78,11 @@ For ordered mfcc features run:
 ./create_chunks.sh $KALDI_ROOT/egs/timit/s5/data/test mfcc_ord 1 test 1
 ``` 
 
+Note: Each training chunk should contain approximatively 1 hour of speech. For a larger training dataset of 100 hours you should use:
+
+``` 
+./create_chunks.sh $KALDI_ROOT/egs/your_dataset/data/train mfcc_ord 100 train 1
+``` 
 
 
 3. Setup the Config file.
