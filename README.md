@@ -37,14 +37,18 @@ Make sure that python is installed (the code is tested with python 2.7 and pytho
   Type `python -c "import kaldi_io"` to check that the package is correctly installed. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
 
 - The implementation of the RNN models sorts the training sentences according to their length. This allows the system to minimize the need of zero padding when forming minibatches. The duration of each sentence is extracted using *sox*. Please, make sure it is installed (it is only used when generating the feature lists in *create_chunk.sh*)
-
+- Source the `pytorch-kaldi` environment:
+  ```
+  cd pytorch-kaldi
+  source ./env.sh
+  ```
 
 ## How to run a TIMIT experiment:
 Even though the code can be easily adapted to any speech dataset, in the following part of the documentation we provide an example based on the popular TIMIT dataset.
 
 1. Run the Kaldi s5 baseline of TIMIT.
 This step is necessary to compute features and labels later used to train the pytorch MLP. In particular:
-- go to *$KALDI_ROOT/egs/timit/s5* and run the script *run.sh*. 
+- go to *$KALDI_ROOT/egs/timit/s5* and run the script *run.sh* sourcing `path.sh` before. 
 - Make sure everything works fine. 
 - Please, also run the Karel’s DNN baseline using *local/nnet/run_dnn.sh*. 
 - Do not forget to compute the alignments for test and dev data with the following commands.
