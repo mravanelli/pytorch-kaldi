@@ -28,11 +28,13 @@ Make sure that python is installed (the code is tested with python 2.7 and pytho
 - If not already done, install Kaldi (http://kaldi-asr.org/). As suggested during the installation, do not forget to add the path of the Kaldi binaries into $HOME/.bashrc. As a first test to check the installation, open a bash shell, type “copy-feats” and make sure no errors appear.
 
 - Install *kaldi-io* package from the kaldi-io-for-python project (https://github.com/vesis84/kaldi-io-for-python). It provides a simple interface between kaldi and python. To install it:
-``` 
-run git clone https://github.com/vesis84/kaldi-io-for-python.git
-add PYTHONPATH=${PYTHONPATH}: to $HOME/.bashrc
-``` 
-Type *import kaldi_io* into the python console and make sure the package is correctly imported. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
+    1. run
+       ``` 
+       git clone https://github.com/vesis84/kaldi-io-for-python.git
+       ```
+    2. add `export PYTHONPATH=$PYTHONPATH:<kaldi-io-dir>` to `$HOME/.bashrc` and source it
+
+  Type `python -c "import kaldi_io"` to check that the package is correctly installed. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
 
 - The implementation of the RNN models sorts the training sentences according to their length. This allows the system to minimize the need of zero padding when forming minibatches. The duration of each sentence is extracted using *sox*. Please, make sure it is installed (it is only used when generating the feature lists in *create_chunk.sh*)
 
