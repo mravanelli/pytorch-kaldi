@@ -108,13 +108,13 @@ $KALDI_ROOT/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn/ali_train_pdf.counts
 4. Run the experiment.
 - Type the following command to run DNN training:
 ``` 
-./run_exp.sh cfg/baselines/TIMIT_MLP.cfg > log.log 
+./run_exp.sh cfg/baselines/TIMIT_MLP.cfg
 ``` 
 or 
 ``` 
-./run_exp.sh cfg/baselines/TIMIT_GRU.cfg > log.log 
+./run_exp.sh cfg/baselines/TIMIT_GRU.cfg
 ``` 
-
+To check possible errors, please take a look into the *log.log* file saved into the output folder (out_folder) specified in the cfg file.
 Note that *run_exp.sh* is a bash script that performs a full ASR experiment (training, forward, and decoding steps).
 If everything works fine, you should find the following files into the output folder:
 - a file *res.res* summarizing the training and eval performance over the various epochs. 
