@@ -101,10 +101,22 @@ Note: Each training chunk should contain approximatively 1 hour of speech. For a
 - Please, modify the paths for dev and test data as well.
 
 - Feel free to modify the DNN architecture and the other optimization parameters according to your needs.
-The required *count_file* (used to normalize the DNN posteriors before feeding the decoder and automatically created by kaldi when running s5 recipe) can be found here:
+
+- The required *count_file* is used to normalize the DNN posteriors before feeding the decoder. This normalization step is crucial for HMM-DNN speech recognition. DNNs, in fact, provide posterior probabilities, while HMMs are generative models that work with likelihoods. To derive the required likelihoods, one can simply divide the posteriors by the prior probabilities.  The count file contains  the aforementioned priors, that are derived by simply counting the phone states. If you ran the full TIMIT s5 recipe (including the DNN part), the count file has been automatically created here:
 
 ``` 
 $KALDI_ROOT/egs/timit/s5/exp/dnn4_pretrain-dbn_dnn/ali_train_pdf.counts
+``` 
+Otherwise, you can create it for scratch using the following commands:
+
+``` 
+alidir=/home/mirco/kaldi-trunk/egs/timit/s5/exp/tri3_ali (change it with your own path)
+
+num_pdf=$(hmm-info $alidir/final.mdl | awk '/pdfs/{print $4}')
+labels_tr_pdf="ark:ali-to-pdf $alidir/final.mdl \"ark:gunzip -c $alidir/ali.*.gz |\" ark:- |"
+
+
+analyze-counts --verbose=1 --binary=false --counts-dim=$num_pdf "$labels_tr_pdf" ali_train_pdf.counts
 ``` 
 
 - Use the option *use_cuda=1* for running the code on a GPU (strongly suggested).
