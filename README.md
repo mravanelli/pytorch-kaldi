@@ -195,7 +195,7 @@ It is also important to properly set the label *rnn=1* if the model is a RNN mod
 [1] M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Improving speech recognition by revising gated recurrent units", in Proceedings of Interspeech 2017. [ArXiv](https://arxiv.org/abs/1710.00641)
 
 [2] M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Light Gated Recurrent Units for Speech Recognition", in IEEE Transactions on
-Emerging Topics in Computational Intelligence (to appear).
+Emerging Topics in Computational Intelligence. [ArXiv](https://arxiv.org/abs/1803.10225)
 
 [3] M. Ravanelli, "Deep Learning for Distant Speech Recognition", PhD Thesis, Unitn 2017. [ArXiv](https://arxiv.org/abs/1712.06086)
 
