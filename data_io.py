@@ -1,13 +1,8 @@
 import kaldi_io
 import numpy as np
-from optparse import OptionParser 
+from optparse import OptionParser
+from six.moves.configparser import ConfigParser
 
-import sys
-
-if sys.version_info[0] < 3:
- import ConfigParser
-else:
- import configparser as ConfigParser
 
 def load_dataset(fea_scp,fea_opts,lab_folder,lab_opts,left,right):
     
@@ -83,7 +78,7 @@ def load_chunk(fea_scp,fea_opts,lab_folder,lab_opts,left,right,shuffle_seed):
   
 def load_counts(class_counts_file):
     with open(class_counts_file) as f:
-        row = f.next().strip().strip('[]').strip()
+        row = next(f).strip().strip('[]').strip()
         counts = np.array([ np.float32(v) for v in row.split() ])
     return counts    
         
@@ -95,7 +90,7 @@ def read_opts():
  (options,args)=parser.parse_args()
 
  cfg_file=options.cfg
- Config = ConfigParser.ConfigParser()
+ Config = ConfigParser()
  Config.read(cfg_file)
 
  # DATA
@@ -188,7 +183,7 @@ def read_conf():
  (options,args)=parser.parse_args()
 
  cfg_file=options.cfg
- Config = ConfigParser.ConfigParser()
+ Config = ConfigParser()
  Config.read(cfg_file)
 
  # DATA
