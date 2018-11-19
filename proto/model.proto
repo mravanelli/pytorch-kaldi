@@ -1,0 +1,11 @@
+[proto]
+compute(architecture,input)
+concatenate(input,input)
+cost_nll(input,label)
+cost_err(input,label)
+mult(input,input)
+mult_constant(input,float)
+sum(input,input)
+sum_constant(input,float)
+avg(input,input)
+mse(input,input)

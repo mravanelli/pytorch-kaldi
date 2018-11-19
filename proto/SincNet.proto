@@ -1,0 +1,13 @@
+[proto]
+sinc_N_filt=int_list(1,inf)
+sinc_len_filt=int_list(1,inf)
+sinc_max_pool_len=int_list(1,inf)
+sinc_sample_rate=int
+sinc_min_low_hz=int
+sinc_min_band_hz=int
+sinc_use_laynorm_inp=bool
+sinc_use_batchnorm_inp=bool
+sinc_use_laynorm=bool_list
+sinc_use_batchnorm=bool_list
+sinc_act=list_str
+sinc_drop=list_float

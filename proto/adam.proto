@@ -1,0 +1,6 @@
+[proto]
+opt_betas=float_list(0,inf)
+opt_eps=float
+opt_weight_decay=float(0,inf)
+opt_amsgrad=bool
+

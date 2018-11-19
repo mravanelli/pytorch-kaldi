@@ -1,0 +1,8 @@
+[proto]
+hidden_size=int
+num_layers=int
+nonlinearity=str
+bias=bool
+batch_first=bool
+dropout=float(0,1)
+bidirectional=bool

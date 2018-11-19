@@ -1,0 +1,13 @@
+[proto]
+minimalgru_lay=str_list
+minimalgru_drop=float_list(0.0,1.0)
+minimalgru_use_laynorm_inp=bool
+minimalgru_use_batchnorm_inp=bool
+minimalgru_use_laynorm=bool_list
+minimalgru_use_batchnorm=bool_list
+minimalgru_bidir=bool
+minimalgru_act=str_list
+minimalgru_orthinit=bool
+
+
+

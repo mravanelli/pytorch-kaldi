@@ -1,0 +1,10 @@
+[proto]
+cnn_N_filt=int_list(1,inf)
+cnn_len_filt=int_list(1,inf)
+cnn_max_pool_len=int_list(1,inf)
+cnn_use_laynorm_inp=bool
+cnn_use_batchnorm_inp=bool
+cnn_use_laynorm=bool_list
+cnn_use_batchnorm=bool_list
+cnn_act=list_str
+cnn_drop=list_float

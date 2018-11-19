@@ -1,0 +1,8 @@
+[proto]
+dnn_lay=str_list
+dnn_drop=float_list(0.0,1.0)
+dnn_use_laynorm_inp=bool
+dnn_use_batchnorm_inp=bool
+dnn_use_batchnorm=bool_list
+dnn_use_laynorm=bool_list
+dnn_act=str_list

@@ -1,0 +1,8 @@
+[proto]
+opt_momentum=float(0,inf)
+opt_alpha=float(0,inf)
+opt_eps=float
+opt_centered=bool
+opt_weight_decay=float(0,inf)
+
+

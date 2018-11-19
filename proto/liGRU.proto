@@ -1,0 +1,12 @@
+[proto]
+ligru_lay=str_list
+ligru_drop=float_list(0.0,1.0)
+ligru_use_laynorm_inp=bool
+ligru_use_batchnorm_inp=bool
+ligru_use_laynorm=bool_list
+ligru_use_batchnorm=bool_list
+ligru_bidir=bool
+ligru_act=str_list
+ligru_orthinit=bool
+
+

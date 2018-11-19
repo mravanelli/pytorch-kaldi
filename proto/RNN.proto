@@ -1,0 +1,13 @@
+[proto]
+rnn_lay=str_list
+rnn_drop=float_list(0.0,1.0)
+rnn_use_laynorm_inp=bool
+rnn_use_batchnorm_inp=bool
+rnn_use_laynorm=bool_list
+rnn_use_batchnorm=bool_list
+rnn_bidir=bool
+rnn_act=str_list
+rnn_orthinit=bool
+
+
+

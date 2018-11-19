@@ -1,0 +1,11 @@
+[proto]
+min_active=int(0,inf)
+max_active=int(0,inf)
+max_mem=int(0,inf)
+beam=float(0,inf)
+latbeam=float(0,inf)
+acwt=float(0,inf)
+max_arcs=int(-inf,inf)
+scoring_opts=str
+norm_vars=bool
+skip_scoring=bool

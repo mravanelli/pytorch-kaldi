@@ -1,0 +1,13 @@
+[proto]
+gru_lay=str_list
+gru_drop=float_list(0.0,1.0)
+gru_use_laynorm_inp=bool
+gru_use_batchnorm_inp=bool
+gru_use_laynorm=bool_list
+gru_use_batchnorm=bool_list
+gru_bidir=bool
+gru_act=str_list
+gru_orthinit=bool
+
+
+
