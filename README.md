@@ -46,7 +46,17 @@ Some features of the new version of the PyTorch-Kaldi toolkit:
 - Tutorials on TIMIT and Librispeech Datasets.
 
 ## Prerequisites
-1. If not already done, install Kaldi (http://kaldi-asr.org/). As suggested during the installation, do not forget to add the path of the Kaldi binaries into $HOME/.bashrc. As a first test to check the installation, open a bash shell, type “copy-feats” and make sure no errors appear.
+1. If not already done, install Kaldi (http://kaldi-asr.org/). As suggested during the installation, do not forget to add the path of the Kaldi binaries into $HOME/.bashrc. For instace, make sure that .bashrc contains the following paths:
+```
+export KALDI_ROOT=/home/mirco/kaldi-trunk
+PATH=$PATH:$KALDI_ROOT/tools/openfst
+PATH=$PATH:$KALDI_ROOT/src/featbin
+PATH=$PATH:$KALDI_ROOT/src/gmmbin
+PATH=$PATH:$KALDI_ROOT/src/bin
+PATH=$PATH:$KALDI_ROOT//src/nnetbin
+export PATH
+```
+As a first test to check the installation, open a bash shell, type "copy-feats" or "hmm-info" and make sure no errors appear.
 
 2. If not already done, install PyTorch (http://pytorch.org/). We tested our codes on PyTorch 0.4.0 and PyTorch 0.4.1. An older version of PyTorch is likely to raise errors. To check your installation, type “python” and, once entered into the console, type “import torch”, and make sure no errors appear.
 
@@ -81,7 +91,7 @@ In the following, we provide a short tutorial of the PyTorch-Kaldi toolkit based
 
 1. Make sure you have the TIMIT dataset. If not, it can be downloaded from the LDC website (https://catalog.ldc.upenn.edu/LDC93S1).
 
-2. Make sure Kaldi and PyTorch are correctly working.
+2. Make sure Kaldi and PyTorch installations are fine. Make also sure that your KALDI paths are corrently working (you should add the kaldi paths into the .bashrc as reported in the section "prerequisites"). For instance, type "copy-feats" and "hmm-info" and make sure no errors appear. 
 
 3. Run the Kaldi s5 baseline of TIMIT. This step is necessary to compute features and labels later used to train the PyTorch neural network. We recommend running the full timit s5 recipe (including the DNN training). This way all the necessary files are created and the user can directly compare the results obtained by Kaldi with that achieved with our toolkit.
 
