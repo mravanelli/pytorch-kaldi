@@ -24,7 +24,7 @@ If you use this code or part of it, please cite the following paper:
   * [How can I use my own dataset?](#how-can-i-use-my-own-dataset-)
   * [How can I plug-in my own features?](#how-can-i-plug-in-my-own-features-)
   * [How can I contribute to the project?](#how-can-i-contribute-to-the-project-)
-* [EXTRA:](#-extra---speech-recognition-from-the-raw-waveform-with-sincnet)  
+* [EXTRA:](#speech-recognition-from-the-raw-waveform-with-sincnet)  
   * [Speech recognition from the raw waveform with SincNet](#-extra---speech-recognition-from-the-raw-waveform-with-sincnet)
 * [References](#references)
 
@@ -501,7 +501,7 @@ The script *run_exp.py* automatically creates chunk-specific config files, that 
 Different neural networks, optimization algorithms, and HMM decoders might depend on a different set of hyperparameters. To address this issue, our current solution is based on the definition of some prototype files (for global, chunk, architecture config files). In general, this approach allows a more transparent check of the fields specified into the global config file. Moreover, it allows users to easily add new parameters without changing any line of the python code.
 For instance, to add a user-defined model, a new proto file (e.g., *user-model.prot*o) that specifies the hyperparameter must be written. Then, the user should only write a class  (e.g., user-model in *neural_networks.py*) that implements the architecture).
 
-
+## [FAQs]
 ## How can I plug-in my model?
 The toolkit is designed to allow users to easily plug-in their own acoustic models. To add a customized neural model do the following steps:
 1. Go into the proto folder and create a new proto file (e.g., *proto/myDNN.proto*). The proto file is used to specify the list of the hyperparameters of your model that will be later set into the configuration file. To have an idea about the information to add to your proto file, you can take a look into the *MLP.proto* file: 
@@ -616,7 +616,8 @@ Moreover, you can take a look into our utility called save_raw_fea.py. This scri
 ## How can I contribute to the project?
 The project is still in its initial phase and we invite all potential contributors to participate. We hope to build a community of developers larger enough to progressively maintain, improve, and expand the functionalities of our current toolkit.  For instance, it could be helpful to report any bug or any suggestion to improve the current version of the code. People can also contribute by adding additional neural models, that can eventually make richer the set of currently-implemented architectures.
 
-## [EXTRA]: Speech recognition from the raw waveform with SincNet
+## [EXTRA]
+## Speech recognition from the raw waveform with SincNet
 SincNet is a convolutional neural network recently proposed to process raw audio waveforms. In particular, SincNet encourages the first layer to discover more meaningful filters by exploiting parametrized sinc functions. In contrast to standard CNNs, which learn all the elements of each filter, only low and high cutoff frequencies of band-pass filters are directly learned from data. This inductive bias offers a very compact way to derive a customized filter-bank front-end, that only depends on some parameters with a clear physical meaning.
 
 To use this model for speech recognition on TIMIT, to the following steps:
