@@ -18,12 +18,12 @@ If you use this code or part of it, please cite the following paper:
 * [Toolkit Overview:](#overview-of-the-toolkit-architecture)
   * [Toolkit architecture](#overview-of-the-toolkit-architecture)
   * [Configuration files](#description-of-the-configuration-files-)
-* [FAQs:](#how-can-i-plug-in-my-model?)
-  * [How can I plug-in my model?](#how-can-i-plug-in-my-model?)
-  * [How can I tune the hyperparameters?](#how-can-i-tune-the-hyperparameters?)
-  * [How can I use my own dataset?](#how-can-i-use-my-own-dataset?)
-  * [How can I plug-in my own features?](#how-can-i-plug-in-my-own-features?)
-  * [How can I contribute to the project?](#how-can-i-contribute-to-the-project?)
+* [FAQs:](#how-can-i-plug-in-my-model)
+  * [How can I plug-in my model?](#how-can-i-plug-in-my-model)
+  * [How can I tune the hyperparameters?](#how-can-i-tune-the-hyperparameters)
+  * [How can I use my own dataset?](#how-can-i-use-my-own-dataset)
+  * [How can I plug-in my own features?](#how-can-i-plug-in-my-own-features)
+  * [How can I contribute to the project?](#how-can-i-contribute-to-the-project)
 * [EXTRA:](#speech-recognition-from-the-raw-waveform-with-sincnet)  
   * [Speech recognition from the raw waveform with SincNet](#speech-recognition-from-the-raw-waveform-with-sincnet)
 * [References](#references)
@@ -502,7 +502,7 @@ Different neural networks, optimization algorithms, and HMM decoders might depen
 For instance, to add a user-defined model, a new proto file (e.g., *user-model.prot*o) that specifies the hyperparameter must be written. Then, the user should only write a class  (e.g., user-model in *neural_networks.py*) that implements the architecture).
 
 ## [FAQs]
-## How can I plug-in my model?
+## How can I plug-in my model
 The toolkit is designed to allow users to easily plug-in their own acoustic models. To add a customized neural model do the following steps:
 1. Go into the proto folder and create a new proto file (e.g., *proto/myDNN.proto*). The proto file is used to specify the list of the hyperparameters of your model that will be later set into the configuration file. To have an idea about the information to add to your proto file, you can take a look into the *MLP.proto* file: 
 
@@ -591,7 +591,7 @@ When implementing a new model, an important debug test consists of doing an over
 In deep learning, it is often important to play with the hyperparameters to find the proper setting for your model. This activity is usually very computational and time-consuming but is often necessary when introducing new architectures. To help hyperparameter tuning, we developed a utility that implements a random search of the hyperparameters (see next section for more details).
 
 
-## How can I tune the hyperparameters?
+## How can I tune the hyperparameters
 A hyperparameter tuning is often needed in deep learning to search for proper neural architectures. To help tuning the hyperparameters within PyTorch-Kaldi, we have implemented a simple utility that implements a random search. In particular, the script  *tune_hyperparameters.py* generates a set of random configuration files and can be run in this way:
 ```
 python tune_hyperparameters.py cfg/TIMIT_MLP_mfcc.cfg exp/TIMIT_MLP_mfcc_tuning 10 arch_lr=randfloat(0.001,0.01) batch_size_train=randint(32,256) dnn_act=choose_str{relu,relu,relu,relu,softmax|tanh,tanh,tanh,tanh,softmax}
@@ -602,18 +602,18 @@ Once the config files are created, they can be run sequentially or in parallel w
 python run_exp.py $cfg_file
 ```
 
-## How can I use my own dataset?
+## How can I use my own dataset
 PyTorch-Kaldi can be used with any speech dataset. To use your own dataset, the steps to take are similar to those discussed in the TIMIT/Librispeech tutorials. In general, what you have to do is the following:
 1. Run the Kaldi recipe with your dataset. Please, see the Kaldi website to have more information on how to perform data preparation.
 2. Compute the alignments on training, validation, and test data.
 3. Write a PyTorch-Kaldi config file *$cfg_file*.
 4. Run the config file with ```python run_exp.sh $cfg_file```.
 
-## How can I plug-in my own features?
+## How can I plug-in my own features
 The current version of PyTorch-Kaldi supports input features stored with the Kaldi ark format. If the user wants to perform experiments with customized features, the latter must be converted into the ark format. Take a look into the Kaldi-io-for-python git repository (https://github.com/vesis84/kaldi-io-for-python) for a detailed description about converting numpy arrays into ark files. 
 Moreover, you can take a look into our utility called save_raw_fea.py. This script generates Kaldi ark files containing raw features, that are later used to train neural networks fed by the raw waveform directly (see the section about processing audio with SincNet).
 
-## How can I contribute to the project?
+## How can I contribute to the project
 The project is still in its initial phase and we invite all potential contributors to participate. We hope to build a community of developers larger enough to progressively maintain, improve, and expand the functionalities of our current toolkit.  For instance, it could be helpful to report any bug or any suggestion to improve the current version of the code. People can also contribute by adding additional neural models, that can eventually make richer the set of currently-implemented architectures.
 
 ## [EXTRA]
