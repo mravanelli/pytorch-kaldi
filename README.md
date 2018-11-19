@@ -1,10 +1,10 @@
 # The PyTorch-Kaldi Speech Recognition Toolkit
-<img src="pytorch-kaldi_logo.png" width="100" img align="center">
+<img src="pytorch-kaldi_logo.png" width="220" img align="left">
 PyTorch-Kaldi is an open-source repository for developing state-of-the-art DNN/HMM speech recognition systems. The DNN part is managed by PyTorch, while feature extraction, label computation, and decoding are performed with the Kaldi toolkit.
 
 This repository contains the last version of the  PyTorch-Kaldi toolkit (PyTorch-Kaldi-v1.0). To take a look into the previous version (PyTorch-Kaldi-v0.1), [click here](https://bitbucket.org/mravanelli/pytorch-kaldi-v0.0/src/master/).
 
-If you use the code or part of it, please cite the following paper:
+If you use this code or part of it, please cite the following paper:
 
 *M. Ravanelli, T. Parcollet, Y. Bengio, "The PyTorch-Kaldi Speech Recognition Toolkit", [ArxIv]*
 
