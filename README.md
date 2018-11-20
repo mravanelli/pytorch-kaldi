@@ -6,7 +6,7 @@ This repository contains the last version of the  PyTorch-Kaldi toolkit (PyTorch
 
 If you use this code or part of it, please cite the following paper:
 
-*M. Ravanelli, T. Parcollet, Y. Bengio, "The PyTorch-Kaldi Speech Recognition Toolkit", [ArxIv]*
+*M. Ravanelli, T. Parcollet, Y. Bengio, "The PyTorch-Kaldi Speech Recognition Toolkit", [arXiv](https://arxiv.org/abs/1811.07453)*
 
 ## Table of Contents
 * [Introduction](#introduction)
