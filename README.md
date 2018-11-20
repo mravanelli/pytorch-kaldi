@@ -8,7 +8,7 @@ If you use this code or part of it, please cite the following paper:
 
 *M. Ravanelli, T. Parcollet, Y. Bengio, "The PyTorch-Kaldi Speech Recognition Toolkit", [arXiv](https://arxiv.org/abs/1811.07453)*
 
-The toolkit is released under a **Creative Commons Attribution 4.0 International license**. You can copy, distribute, modify the code for research, commercial and non commercial purposed. We only ask to cite our paper referenced above.
+The toolkit is released under a **Creative Commons Attribution 4.0 International license**. You can copy, distribute, modify the code for research, commercial and non commercial purposes. We only ask to cite our paper referenced above.
 
 ## Table of Contents
 * [Introduction](#introduction)
