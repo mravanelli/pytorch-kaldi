@@ -10,6 +10,8 @@ If you use this code or part of it, please cite the following paper:
 
 The toolkit is released under a **Creative Commons Attribution 4.0 International license**. You can copy, distribute, modify the code for research, commercial and non-commercial purposes. We only ask to cite our paper referenced above.
 
+[See a short introductory video on the PyTorch-Kaldi Toolkit](https://www.youtube.com/watch?v=VDQaf0SS4K0&t=2s)
+
 ## Table of Contents
 * [Introduction](#introduction)
 * [Prerequisites](#prerequisites)
