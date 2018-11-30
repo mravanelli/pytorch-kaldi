@@ -643,6 +643,9 @@ The project is still in its initial phase and we invite all potential contributo
 
 ## [EXTRA]
 ## Speech recognition from the raw waveform with SincNet
+
+[Take a look into our video introduction to SincNet](https://www.youtube.com/watch?v=mXQBObRGUgk&feature=youtu.be)
+
 SincNet is a convolutional neural network recently proposed to process raw audio waveforms. In particular, SincNet encourages the first layer to discover more meaningful filters by exploiting parametrized sinc functions. In contrast to standard CNNs, which learn all the elements of each filter, only low and high cutoff frequencies of band-pass filters are directly learned from data. This inductive bias offers a very compact way to derive a customized filter-bank front-end, that only depends on some parameters with a clear physical meaning.
 
 To use this model for speech recognition on TIMIT, to the following steps:
