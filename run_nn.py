@@ -239,8 +239,11 @@ for i in range(N_batches):
             # save the output    
             kaldi_io.write_mat(post_file[forward_outs[out_id]], out_save, data_name[i])
     else:
-        loss_sum=loss_sum+outs_dict['loss_final'].detach()
-        err_sum=err_sum+outs_dict['err_final'].detach()
+        # for printing instantaneous values
+        batch_loss = round(outs_dict['loss_final'].item(),3)
+        batch_err = round(outs_dict['err_final'].item(),3)
+        loss_sum=loss_sum+batch_loss
+        err_sum=err_sum+batch_err
        
     # update it to the next batch 
     beg_batch=end_batch
@@ -248,12 +251,12 @@ for i in range(N_batches):
     
     # Progress bar
     if to_do == 'train':
-      status_string="Training | (Batch "+str(i+1)+"/"+str(N_batches)+")"
+      status_string="Training |L:{}, Err:{}| (Batch {}/{})".format(batch_loss,batch_err,i+1,N_batches)
     if to_do == 'valid':
-      status_string="Validating | (Batch "+str(i+1)+"/"+str(N_batches)+")"
+      status_string="Validating |L:{}, Err:{}| (Batch {}/{})".format(batch_loss,batch_err,i+1,N_batches)
     if to_do == 'forward':
-      status_string="Forwarding | (Batch "+str(i+1)+"/"+str(N_batches)+")"
-      
+      status_string="Forwarding | (Batch {}/{})".format(i+1,N_batches)
+    
     progress(i, N_batches, status=status_string)
 
 elapsed_time_chunk=time.time() - start_time 
@@ -284,8 +287,8 @@ if to_do=='forward':
 with open(info_file, "w") as text_file:
     text_file.write("[results]\n")
     if to_do!='forward':
-        text_file.write("loss=%s\n" % loss_tot.cpu().numpy())
-        text_file.write("err=%s\n" % err_tot.cpu().numpy())
+        text_file.write("loss=%s\n" % loss_tot)
+        text_file.write("err=%s\n" % err_tot)
     text_file.write("elapsed_time_read=%f (reading dataset)\n" % elapsed_time_reading)
     text_file.write("elapsed_time_load=%f (loading data on pytorch/gpu)\n" % elapsed_time_load)
     text_file.write("elapsed_time_chunk=%f (processing chunk)\n" % elapsed_time_chunk)
