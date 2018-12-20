@@ -326,7 +326,7 @@ for data in forward_data_lst:
                 run_shell(cmd_decode,log_file)
                 
                 # remove ark files if needed
-                if forward_save_files:
+                if not forward_save_files:
                     list_rem=glob.glob(files_dec)
                     for rem_ark in list_rem:
                         os.remove(rem_ark)
