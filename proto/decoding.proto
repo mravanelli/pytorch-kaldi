@@ -9,3 +9,4 @@ max_arcs=int(-inf,inf)
 scoring_opts=str
 norm_vars=bool
 skip_scoring=bool
+num_threads=int(1,inf)
