@@ -53,6 +53,7 @@ np.random.seed(seed)
 use_cuda=strtobool(config['exp']['use_cuda'])
 save_gpumem=strtobool(config['exp']['save_gpumem'])
 multi_gpu=strtobool(config['exp']['multi_gpu'])
+is_production=strtobool(config['exp']['production'])
 
 to_do=config['exp']['to_do']
 info_file=config['exp']['out_info']
@@ -83,8 +84,7 @@ start_time = time.time()
 [cw_left_max,cw_right_max]=compute_cw_max(fea_dict)
 
 # Reading all the features and labels
-[data_name,data_set,data_end_index]=read_lab_fea(fea_dict,lab_dict,cw_left_max,cw_right_max,max_seq_length)
-
+[data_name,data_set,data_end_index]=read_lab_fea(fea_dict,lab_dict,cw_left_max,cw_right_max,max_seq_length,is_production)
 
 # Randomize if the model is not sequential
 if not(seq_model) and to_do!='forward':
@@ -133,7 +133,6 @@ if to_do=='forward':
             out_file=info_file.replace('.info','_'+forward_outs[out_id]+'_to_decode.ark')
         else:
             out_file=info_file.replace('.info','_'+forward_outs[out_id]+'.ark')
-            
         post_file[forward_outs[out_id]]=kaldi_io.open_or_fd(out_file,'wb')
 
 

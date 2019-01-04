@@ -17,6 +17,7 @@ import numpy as np
 from utils import check_cfg,create_chunks,write_cfg_chunk,compute_avg_performance, \
                   read_args_command_line, run_shell,compute_n_chunks, get_all_archs,cfg_item2sec, \
                   dump_epoch_results, run_shell_display, create_curves
+from shutil import copyfile
 import re
 from distutils.util import strtobool
 
@@ -67,6 +68,7 @@ res_file.close()
 
 
 # Read cfg file options
+is_production=strtobool(config['exp']['production'])
 cfg_file_proto_chunk=config['cfg_proto']['cfg_proto_chunk']
 run_nn_script=config['exp']['run_nn_script']
 cmd=config['exp']['cmd']
@@ -96,7 +98,14 @@ if strtobool(config['batches']['increase_seq_length_train']):
 else:
     max_seq_length_train_curr=max_seq_length_train
     
+# If production, skip training and forward directly from last saved models
+if is_production:
+    ep           = N_ep-1
+    N_ep         = 0
+    model_files  = {}
 
+    for arch in pt_files.keys():
+        model_files[arch] = out_folder+'/exp_files/final_'+arch+'.pkl'
 
 # --------TRAINING LOOP--------#
 for ep in range(N_ep):
@@ -237,20 +246,26 @@ for ep in range(N_ep):
         for lr_arch in lr.keys():
             if ((err_valid_mean_prev-err_valid_mean)/err_valid_mean)<improvement_threshold[lr_arch]:
                 lr[lr_arch]=lr[lr_arch]*halving_factor[lr_arch]
-    
+
+# Training has ended, copy the last .pkl to final_arch.pkl for production
+for pt_arch in pt_files.keys():
+    if os.path.exists(model_files[pt_arch]) and not os.path.exists(out_folder+'/exp_files/final_'+pt_arch+'.pkl'):
+        copyfile(model_files[pt_arch], out_folder+'/exp_files/final_'+pt_arch+'.pkl')
   
                 
 # --------FORWARD--------#
 for forward_data in forward_data_lst:
            
-         
          # Compute the number of chunks
          N_ck_forward=compute_n_chunks(out_folder,forward_data,ep,'forward')
          
          for ck in range(N_ck_forward):
-             
-            print('Testing %s chunk = %i / %i' %(forward_data,ck+1, N_ck_forward))
             
+            if not is_production:
+                print('Testing %s chunk = %i / %i' %(forward_data,ck+1, N_ck_forward))
+            else: 
+                print('Forwarding %s chunk = %i / %i' %(forward_data,ck+1, N_ck_forward))
+
             # path of the list of features for this chunk
             lst_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_*.lst'
             
@@ -301,15 +316,31 @@ for data in forward_data_lst:
  
             # add graph_dir, datadir, alidir
             lab_field=config[cfg_item2sec(config,'data_name',data)]['lab']
-            pattern='lab_folder=(.*)\nlab_opts=(.*)\nlab_count_file=(.*)\nlab_data_folder=(.*)\nlab_graph=(.*)'
-            alidir=re.findall(pattern,lab_field)[0][0]
-            config_dec.set('decoding','alidir',os.path.abspath(alidir))
             
-            datadir=re.findall(pattern,lab_field)[0][3]
-            config_dec.set('decoding','data',os.path.abspath(datadir))
             
-            graphdir=re.findall(pattern,lab_field)[0][4]
-            config_dec.set('decoding','graphdir',os.path.abspath(graphdir))
+            # Production case, we don't have labels
+            if not is_production:
+                pattern='lab_folder=(.*)\nlab_opts=(.*)\nlab_count_file=(.*)\nlab_data_folder=(.*)\nlab_graph=(.*)'
+                alidir=re.findall(pattern,lab_field)[0][0]
+                config_dec.set('decoding','alidir',os.path.abspath(alidir))
+
+                datadir=re.findall(pattern,lab_field)[0][3]
+                config_dec.set('decoding','data',os.path.abspath(datadir))
+                
+                graphdir=re.findall(pattern,lab_field)[0][4]
+                config_dec.set('decoding','graphdir',os.path.abspath(graphdir))
+            else:
+                pattern='lab_data_folder=(.*)\nlab_graph=(.*)'
+                datadir=re.findall(pattern,lab_field)[0][0]
+                config_dec.set('decoding','data',os.path.abspath(datadir))
+                
+                graphdir=re.findall(pattern,lab_field)[0][1]
+                config_dec.set('decoding','graphdir',os.path.abspath(graphdir))
+
+                # The ali dir is supposed to be in exp/model/ which is one level ahead of graphdir
+                alidir = graphdir.split('/')[0:len(graphdir.split('/'))-1]
+                alidir = "/".join(alidir)
+                config_dec.set('decoding','alidir',os.path.abspath(alidir))
 
             
             with open(config_dec_file, 'w') as configfile:
@@ -326,7 +357,7 @@ for data in forward_data_lst:
                 run_shell(cmd_decode,log_file)
                 
                 # remove ark files if needed
-                if forward_save_files:
+                if not forward_save_files:
                     list_rem=glob.glob(files_dec)
                     for rem_ark in list_rem:
                         os.remove(rem_ark)
@@ -340,7 +371,8 @@ for data in forward_data_lst:
             print(wers)
 
 # Saving Loss and Err as .txt and plotting curves
-create_curves(out_folder, N_ep, valid_data_lst)
+if not is_production:
+    create_curves(out_folder, N_ep, valid_data_lst)
             
             
 
