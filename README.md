@@ -27,6 +27,7 @@ The toolkit is released under a **Creative Commons Attribution 4.0 International
   * [How can I tune the hyperparameters?](#how-can-i-tune-the-hyperparameters)
   * [How can I use my own dataset?](#how-can-i-use-my-own-dataset)
   * [How can I plug-in my own features?](#how-can-i-plug-in-my-own-features)
+  * [How can I transcript my own audio files?](#how-can-i-transcript-my-own-audio-files)
   * [How can I contribute to the project?](#how-can-i-contribute-to-the-project)
 * [EXTRA:](#speech-recognition-from-the-raw-waveform-with-sincnet)  
   * [Speech recognition from the raw waveform with SincNet](#speech-recognition-from-the-raw-waveform-with-sincnet)
@@ -637,6 +638,39 @@ PyTorch-Kaldi can be used with any speech dataset. To use your own dataset, the 
 ## How can I plug-in my own features
 The current version of PyTorch-Kaldi supports input features stored with the Kaldi ark format. If the user wants to perform experiments with customized features, the latter must be converted into the ark format. Take a look into the Kaldi-io-for-python git repository (https://github.com/vesis84/kaldi-io-for-python) for a detailed description about converting numpy arrays into ark files. 
 Moreover, you can take a look into our utility called save_raw_fea.py. This script generates Kaldi ark files containing raw features, that are later used to train neural networks fed by the raw waveform directly (see the section about processing audio with SincNet).
+
+## How can I transcript my own audio files
+The current version of Pytorch-Kaldi supports the standard production process of using a Pytorch-Kaldi pretrained accoustic model to transcript one or multiples .wav files. It is important to understand that you must have a trained Pytorch-Kaldi model. While you don't need labels or alignments anymore, Pytorch-Kaldi still needs many files to transcipt a new audio file:
+1. The features and features list *feats.scp* (with .ark files, see #how-can-i-plug-my-own-features)
+2. The decoding graph (usually created with mkgraph.sh during previous model training such as triphones models)
+3. The *final.mdl* file that has been used to create the accoustic features (only for decoding, not mandatory if you have your custom decoding script)
+
+Once you have all these files, you can start adding your dataset section to the global configuration file. The easiest way is to copy the *cfg* file used to train your accoustic model and just modify by adding a new *[dataset]*:
+```
+[dataset4]
+data_name = myWavFile
+fea = fea_name=fbank
+  fea_lst=myWavFilePath/data/feats.scp
+  fea_opts=apply-cmvn --utt2spk=ark:myWavFilePath/data//utt2spk  ark:myWavFilePath/cmvn_test.ark ark:- ark:- | add-deltas --delta-order=0 ark:- ark:- |
+  cw_left=5
+  cw_right=5
+
+lab = lab_name=none
+  lab_data_folder=myWavFilePath/data/
+  lab_graph=myWavFilePath/exp/tri3/graph
+n_chunks=1
+
+[data_use]
+train_with = TIMIT_tr
+valid_with = TIMIT_dev
+forward_with = myWavFile
+```
+The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip these informations to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more that the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk). In a production scenario, you might need to transcript a huge number of audio files, and your don't wan't to create as much as needed .cfg file. In this extent, and after creating this initial production .cfg file (you can leave the path blank), you can call the run_exp.py script with specific arguments referring to your different .wav features:
+```
+python run_exp.py cfg/TIMIT_baselines/TIMIT_MLP_fbank_prod.cfg --dataset4,fea,0,fea_lst="myWavFilePath/data/feats.scp" --dataset4,lab,0,lab_data_folder="myWavFilePath/data/" --dataset4,lab,0,lab_graph="myWavFilePath/exp/tri3/graph/"
+```
+
+This command will internaly alters the configuration file with your specified paths, and run and your defined features ! Note that passing long arguments to the run_exp.py script requires a specific notation. *--dataset4* specifies the name of the created section, *fea* is the name of the higher level field, *fea_lst* or *lab_graph* are the name of the lowest level field you want to change. The *0* is here to indicate which lowest level field you want to alter, indeed some configuration files may contain multiple *lab_graph* per dataset ! Therefore, *0* indicates the first occurence, *1* the second ... Paths MUST be encapsulated by " " to be interpreted as full strings ! Note that you need to alter the *data_name* and *forward_with* fields if you don't wan't different .wav files transcriptions to erase each others (decoding files are stored accordingly to the field*data_name*). ``` --dataset4,data_name=MyNewName --data_use,forward_with=MyNewName ```.
 
 ## How can I contribute to the project
 The project is still in its initial phase and we invite all potential contributors to participate. We hope to build a community of developers larger enough to progressively maintain, improve, and expand the functionalities of our current toolkit.  For instance, it could be helpful to report any bug or any suggestion to improve the current version of the code. People can also contribute by adding additional neural models, that can eventually make richer the set of currently-implemented architectures.
