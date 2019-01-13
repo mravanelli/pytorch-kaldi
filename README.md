@@ -63,7 +63,7 @@ export PATH
 ```
 As a first test to check the installation, open a bash shell, type "copy-feats" or "hmm-info" and make sure no errors appear.
 
-2. If not already done, install PyTorch (http://pytorch.org/). We tested our codes on PyTorch 0.4.0 and PyTorch 0.4.1. An older version of PyTorch is likely to raise errors. To check your installation, type “python” and, once entered into the console, type “import torch”, and make sure no errors appear.
+2. If not already done, install PyTorch (http://pytorch.org/). We tested our codes on PyTorch 1.0 and PyTorch 0.4. An older version of PyTorch is likely to raise errors. To check your installation, type “python” and, once entered into the console, type “import torch”, and make sure no errors appear.
 
 3. Install kaldi-io package from the kaldi-io-for-python project (https://github.com/vesis84/kaldi-io-for-python). It provides a simple interface between kaldi and python. To install it:
 
@@ -109,6 +109,8 @@ steps/align_fmllr.sh --nj 4 data/test data/lang exp/tri3 exp/tri3_ali_test
 
 If you want to use dnn alignments (as suggested), type:
 ```
+steps/nnet/align.sh --nj 4 data-fmllr-tri3/train data/lang exp/dnn4_pretrain-dbn_dnn exp/dnn4_pretrain-dbn_dnn_ali
+
 steps/nnet/align.sh --nj 4 data-fmllr-tri3/dev data/lang exp/dnn4_pretrain-dbn_dnn exp/dnn4_pretrain-dbn_dnn_ali_dev
 
 steps/nnet/align.sh --nj 4 data-fmllr-tri3/test data/lang exp/dnn4_pretrain-dbn_dnn exp/dnn4_pretrain-dbn_dnn_ali_test
