@@ -35,7 +35,7 @@ The toolkit is released under a **Creative Commons Attribution 4.0 International
 
 
 ## Introduction
-The PyTorch-Kaldi project aims to bridge the gap between the Kaldi and the PyTorch toolkits, trying to inherit the efficiency of Kaldi and the flexibility of PyTorch. PyTorch-Kaldi is not only a simple interface between these software, but it embeds several useful features for developing modern speech recognizers. For instance, the code is specifically designed to naturally plug-in user-defined acoustic models. As an alternative, users can exploit several pre-implemented neural networks that can be customized using intuitive configuration files. PyTorch-Kaldi supports multiple feature and label streams as well as combinations of neural networks, enabling the use of complex neural architectures. The toolkit is publicly-released along with a rich documentation and is designed to properly work locally or on HPC clusters.
+The PyTorch-Kaldi project aims to bridge the gap between the Kaldi and the PyTorch toolkits, trying to inherit the efficiency of Kaldi and the flexibility of PyTorch. PyTorch-Kaldi is not only a simple interface between these software, but it embeds several useful features for developing modern speech recognizers. For instance, the code is specifically designed to naturally plug-in user-defined acoustic models. As an alternative, users can exploit several pre-implemented neural networks that can be customized using intuitive configuration files. PyTorch-Kaldi supports multiple feature and label streams as well as combinations of neural networks, enabling the use of complex neural architectures. The toolkit is publicly-released along with rich documentation and is designed to properly work locally or on HPC clusters.
 
 Some features of the new version of the PyTorch-Kaldi toolkit:
 
@@ -51,7 +51,7 @@ Some features of the new version of the PyTorch-Kaldi toolkit:
 - Tutorials on TIMIT and Librispeech Datasets.
 
 ## Prerequisites
-1. If not already done, install Kaldi (http://kaldi-asr.org/). As suggested during the installation, do not forget to add the path of the Kaldi binaries into $HOME/.bashrc. For instace, make sure that .bashrc contains the following paths:
+1. If not already done, install Kaldi (http://kaldi-asr.org/). As suggested during the installation, do not forget to add the path of the Kaldi binaries into $HOME/.bashrc. For instance, make sure that .bashrc contains the following paths:
 ```
 export KALDI_ROOT=/home/mirco/kaldi-trunk
 PATH=$PATH:$KALDI_ROOT/tools/openfst
@@ -71,11 +71,11 @@ As a first test to check the installation, open a bash shell, type "copy-feats" 
     git clone https://github.com/vesis84/kaldi-io-for-python.git
     ```
 
-    Remember to add export PYTHONPATH=$PYTHONPATH:<kaldi-io-dir> to $HOME/.bashrc and source it.
+    Remember to add export PYTHONPATH=$PYTHONPATH:(your_kaldi_io_dir) to $HOME/.bashrc and source it.
     Type python -c "import kaldi_io" to check that the package is correctly installed. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
 
 
-4. We recommend running the code on a GPU machine. Make sure that the CUDA libraries (https://developer.nvidia.com/cuda-downloads) are installed and correctly working. We tested our system on Cuda 9.0, 9.1 and 8.0. Make sure that python is installed (the code is tested with python 2.7 and python 3.6). Even though not mandatory, we suggest to use Anaconda (https://anaconda.org/anaconda/python).
+4. We recommend running the code on a GPU machine. Make sure that the CUDA libraries (https://developer.nvidia.com/cuda-downloads) are installed and correctly working. We tested our system on Cuda 9.0, 9.1 and 8.0. Make sure that python is installed (the code is tested with python 2.7 and python 3.6). Even though not mandatory, we suggest using Anaconda (https://anaconda.org/anaconda/python).
 
 ## How to install
 To install PyTorch-Kaldi, do the following steps:
@@ -96,7 +96,7 @@ In the following, we provide a short tutorial of the PyTorch-Kaldi toolkit based
 
 1. Make sure you have the TIMIT dataset. If not, it can be downloaded from the LDC website (https://catalog.ldc.upenn.edu/LDC93S1).
 
-2. Make sure Kaldi and PyTorch installations are fine. Make also sure that your KALDI paths are corrently working (you should add the kaldi paths into the .bashrc as reported in the section "prerequisites"). For instance, type "copy-feats" and "hmm-info" and make sure no errors appear. 
+2. Make sure Kaldi and PyTorch installations are fine. Make also sure that your KALDI paths are currently working (you should add the kaldi paths into the .bashrc as reported in the section "Prerequisites"). For instance, type "copy-feats" and "hmm-info" and make sure no errors appear. 
 
 3. Run the Kaldi s5 baseline of TIMIT. This step is necessary to compute features and labels later used to train the PyTorch neural network. We recommend running the full timit s5 recipe (including the DNN training). This way all the necessary files are created and the user can directly compare the results obtained by Kaldi with that achieved with our toolkit.
 
@@ -149,7 +149,7 @@ This script starts a full ASR experiment and performs training, validation, forw
 ```
 python run_nn.py exp/TIMIT_MLP_basic/exp_files/train_TIMIT_tr_ep000_ck00.cfg
 ```
-In this way you “manually” run the training of the first chunk of speech an you can see all the errors directly from the standard output.
+In this way you “manually” run the training of the first chunk of speech and you can see all the errors directly from the standard output.
 
 
 8. At the end of training, the phone error rate (PER\%) is appended into the res.res file. To see more details on the decoding results, you can go into “decoding_test” in the output folder and take a look to the various files created.  For this specific example, we obtained the following *res.res* file:
@@ -386,7 +386,7 @@ forward_with = TIMIT_test
 ```
 
 This section tells how the data listed into the sections *[datasets\*]* are used within the *run_exp.py* script. 
-The first line means that we perform training with the data called *TIMIT_tr*. Note that this dataset name must appear in one of the dataset sections, otherwise the config parser will raise an error. Similarly,  the second and the third lines specify the datasets used for validation and forward phases, respectively.
+The first line means that we perform training with the data called *TIMIT_tr*. Note that this dataset name must appear in one of the dataset sections, otherwise the config parser will raise an error. Similarly,  the second and the third lines specify the datass used for validation and forward phases, respectively.
 
 ```
 [batches]
@@ -631,7 +631,7 @@ python run_exp.py $cfg_file
 ```
 
 ## How can I use my own dataset
-PyTorch-Kaldi can be used with any speech dataset. To use your own dataset, the steps to take are similar to those discussed in the TIMIT/Librispeech tutorials. In general, what you have to do is the following:
+PyTorch-Kaldi can be usewith any speech dataset. To use your own dataset, the steps to take are similar to those discussed in the TIMIT/Librispeech tutorials. In general, what you have to do is the following:
 1. Run the Kaldi recipe with your dataset. Please, see the Kaldi website to have more information on how to perform data preparation.
 2. Compute the alignments on training, validation, and test data.
 3. Write a PyTorch-Kaldi config file *$cfg_file*.
@@ -642,10 +642,10 @@ The current version of PyTorch-Kaldi supports input features stored with the Kal
 Moreover, you can take a look into our utility called save_raw_fea.py. This script generates Kaldi ark files containing raw features, that are later used to train neural networks fed by the raw waveform directly (see the section about processing audio with SincNet).
 
 ## How can I transcript my own audio files
-The current version of Pytorch-Kaldi supports the standard production process of using a Pytorch-Kaldi pretrained accoustic model to transcript one or multiples .wav files. It is important to understand that you must have a trained Pytorch-Kaldi model. While you don't need labels or alignments anymore, Pytorch-Kaldi still needs many files to transcipt a new audio file:
+The current version of Pytorch-Kaldi supports the standard production process of using a Pytorch-Kaldi pretrained acoustic model to transcript one or multiples .wav files. It is important to understand that you must have a trained Pytorch-Kaldi model. While you don't need labels or alignments anymore, Pytorch-Kaldi still needs many files to transcript a new audio file:
 1. The features and features list *feats.scp* (with .ark files, see #how-can-i-plug-my-own-features)
 2. The decoding graph (usually created with mkgraph.sh during previous model training such as triphones models)
-3. The *final.mdl* file that has been used to create the accoustic features (only for decoding, not mandatory if you have your custom decoding script)
+3. The *final.mdl* file that has been used to create the acoustic features (only for decoding, not mandatory if you have your custom decoding script)
 
 Once you have all these files, you can start adding your dataset section to the global configuration file. The easiest way is to copy the *cfg* file used to train your accoustic model and just modify by adding a new *[dataset]*:
 ```
@@ -667,12 +667,12 @@ train_with = TIMIT_tr
 valid_with = TIMIT_dev
 forward_with = myWavFile
 ```
-The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip these informations to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more that the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk). In a production scenario, you might need to transcript a huge number of audio files, and your don't wan't to create as much as needed .cfg file. In this extent, and after creating this initial production .cfg file (you can leave the path blank), you can call the run_exp.py script with specific arguments referring to your different .wav features:
+The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip these informations to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more than the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk). In a production scenario, you might need to transcript a huge number of audio files, and your don't wan't to create as much as needed .cfg file. In this extent, and after creating this initial production .cfg file (you can leave the path blank), you can call the run_exp.py script with specific arguments referring to your different.wav features:
 ```
 python run_exp.py cfg/TIMIT_baselines/TIMIT_MLP_fbank_prod.cfg --dataset4,fea,0,fea_lst="myWavFilePath/data/feats.scp" --dataset4,lab,0,lab_data_folder="myWavFilePath/data/" --dataset4,lab,0,lab_graph="myWavFilePath/exp/tri3/graph/"
 ```
 
-This command will internaly alters the configuration file with your specified paths, and run and your defined features ! Note that passing long arguments to the run_exp.py script requires a specific notation. *--dataset4* specifies the name of the created section, *fea* is the name of the higher level field, *fea_lst* or *lab_graph* are the name of the lowest level field you want to change. The *0* is here to indicate which lowest level field you want to alter, indeed some configuration files may contain multiple *lab_graph* per dataset ! Therefore, *0* indicates the first occurence, *1* the second ... Paths MUST be encapsulated by " " to be interpreted as full strings ! Note that you need to alter the *data_name* and *forward_with* fields if you don't wan't different .wav files transcriptions to erase each others (decoding files are stored accordingly to the field*data_name*). ``` --dataset4,data_name=MyNewName --data_use,forward_with=MyNewName ```.
+This command will internally alter the configuration file with your specified paths, and run and your defined features! Note that passing long arguments to the run_exp.py script requires a specific notation. *--dataset4* specifies the name of the created section, *fea* is the name of the higher level field, *fea_lst* or *lab_graph* are the name of the lowest level field you want to change. The *0* is here to indicate which lowest level field you want to alter, indeed some configuration files may contain multiple *lab_graph* per dataset! Therefore, *0* indicates the first occurence, *1* the second ... Paths MUST be encapsulated by " " to be interpreted as full strings! Note that you need to alter the *data_name* and *forward_with* fields if you don't wan't different .wav files transcriptions to erase each other (decoding files are stored accordingly to the field*data_name*). ``` --dataset4,data_name=MyNewName --data_use,forward_with=MyNewName ```.
 
 ## How can I contribute to the project
 The project is still in its initial phase and we invite all potential contributors to participate. We hope to build a community of developers larger enough to progressively maintain, improve, and expand the functionalities of our current toolkit.  For instance, it could be helpful to report any bug or any suggestion to improve the current version of the code. People can also contribute by adding additional neural models, that can eventually make richer the set of currently-implemented architectures.
@@ -704,6 +704,7 @@ python ./run_exp.sh cfg/TIMIT_baselines/TIMIT_SincNet_raw.cfg
 [3] M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Light Gated Recurrent Units for Speech Recognition", in IEEE Transactions on Emerging Topics in Computational Intelligence. [ArXiv](https://arxiv.org/abs/1803.10225)
 
 [4] M. Ravanelli, "Deep Learning for Distant Speech Recognition", PhD Thesis, Unitn 2017. [ArXiv](https://arxiv.org/abs/1712.06086)
+
 
 
 
