@@ -71,7 +71,7 @@ As a first test to check the installation, open a bash shell, type "copy-feats" 
     git clone https://github.com/vesis84/kaldi-io-for-python.git
     ```
 
-    Remember to add export PYTHONPATH=$PYTHONPATH:(your_kaldi_io_dir) to $HOME/.bashrc and source it.
+    Remember to add **export PYTHONPATH=$PYTHONPATH:(your_kaldi_io_dir)** to $HOME/.bashrc and source it.
     Type python -c "import kaldi_io" to check that the package is correctly installed. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
 
 
