@@ -21,7 +21,7 @@ The toolkit is released under a **Creative Commons Attribution 4.0 International
   * [Librispeech tutorial](#librispeech-tutorial)
 * [Toolkit Overview:](#overview-of-the-toolkit-architecture)
   * [Toolkit architecture](#overview-of-the-toolkit-architecture)
-  * [Configuration files](#description-of-the-configuration-files-)
+  * [Configuration files](#description-of-the-configuration-files)
 * [FAQs:](#how-can-i-plug-in-my-model)
   * [How can I plug-in my model?](#how-can-i-plug-in-my-model)
   * [How can I tune the hyperparameters?](#how-can-i-tune-the-hyperparameters)
@@ -116,7 +116,7 @@ steps/nnet/align.sh --nj 4 data-fmllr-tri3/dev data/lang exp/dnn4_pretrain-dbn_d
 steps/nnet/align.sh --nj 4 data-fmllr-tri3/test data/lang exp/dnn4_pretrain-dbn_dnn exp/dnn4_pretrain-dbn_dnn_ali_test
 ```
 
-5. We start this tutorial with a very simple MLP network trained on mfcc features.  Before launching the experiment, take a look at the configuration file  *cfg/TIMIT_baselines/TIMIT_MLP_mfcc_basic.cfg*. See the [Description of the configuration files](#description-of-the-configuration-files-) for a detailed description of all its fields. 
+5. We start this tutorial with a very simple MLP network trained on mfcc features.  Before launching the experiment, take a look at the configuration file  *cfg/TIMIT_baselines/TIMIT_MLP_mfcc_basic.cfg*. See the [Description of the configuration files](#description-of-the-configuration-files) for a detailed description of all its fields. 
 
 6. Change the config file according to your paths. In particular:
 - Set “fea_lst” with the path of your mfcc training list (that should be in $KALDI_ROOT/egs/timit/s5/data/train/feats.scp)
