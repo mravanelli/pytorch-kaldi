@@ -496,14 +496,21 @@ def check_cfg(cfg_file,config,cfg_file_proto):
         
         fea_names_lst.append(sorted(fea_names))
         lab_names_lst.append(sorted(lab_names))
-
+        
+        # Check that fea_name doesn't contain special characters
+        for name_features in fea_names_lst[cnt]:
+            if not(re.match("^[a-zA-Z0-9]*$", name_features)):
+                    sys.stderr.write("ERROR: features names (fea_name=) must contain only letters or numbers (no special characters as \"_,$,..\") \n" )
+                    sec_parse=False
+                    sys.exit(0) 
+            
         if cnt>0:
             if fea_names_lst[cnt-1]!=fea_names_lst[cnt]:
-                sys.stderr.write("features name (fea_name) must be the same of all the datasets! \n" )
+                sys.stderr.write("ERROR: features name (fea_name) must be the same of all the datasets! \n" )
                 sec_parse=False
                 sys.exit(0) 
             if lab_names_lst[cnt-1]!=lab_names_lst[cnt]:
-                sys.stderr.write("labels name (lab_name) must be the same of all the datasets! \n" )
+                sys.stderr.write("ERROR: labels name (lab_name) must be the same of all the datasets! \n" )
                 sec_parse=False
                 sys.exit(0) 
             
