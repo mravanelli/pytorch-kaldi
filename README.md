@@ -12,6 +12,9 @@ The toolkit is released under a **Creative Commons Attribution 4.0 International
 
 [See a short introductory video on the PyTorch-Kaldi Toolkit](https://www.youtube.com/watch?v=VDQaf0SS4K0&t=2s)
 
+We are actively thinking about the next version of the PyTorch-Kaldi toolkit. Our goal is to make the development of speech recognition systems more easy and flexible. Please, [fill this survey to help us!](https://docs.google.com/forms/d/12jd-QP5m8NAJVpiypvtVGy1n_d2iuWaLozXq5hsg4yA/edit?usp=sharing)
+
+
 ## Table of Contents
 * [Introduction](#introduction)
 * [Prerequisites](#prerequisites)
