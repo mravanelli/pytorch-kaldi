@@ -561,6 +561,10 @@ def check_cfg(cfg_file,config,cfg_file_proto):
                     folder_lab_count=lab_folders[lab_lst.index(forward_norm_lst[i])]
                     cmd="hmm-info "+folder_lab_count+"/final.mdl | awk '/pdfs/{print $4}'"
                     output=run_shell(cmd,log_file)
+                    if output.decode().rstrip()=='':
+                        sys.stderr.write("ERROR: hmm-info command doesn't exist. Make sure your .bashrc contains the Kaldi paths and correctly exports it.\n")
+                        sys.exit(0)
+
                     N_out=int(output.decode().rstrip())
                     N_out_lab[lab_lst.index(forward_norm_lst[i])]=N_out
                     count_file_path=out_folder+'/exp_files/forward_'+forward_out_lst[i]+'_'+forward_norm_lst[i]+'.count'
