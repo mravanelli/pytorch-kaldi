@@ -36,9 +36,8 @@ out_folder=config['exp']['out_folder']
 if not os.path.exists(out_folder):
     os.makedirs(out_folder+'/exp_files')
 
-# Import paths of kaldi libraries    
+# Log file path    
 log_file=config['exp']['out_folder']+'/log.log'
-run_shell('./path.sh',log_file)
 
 
 # Reading and parsing optional arguments from command line (e.g.,--optimization,lr=0.002)
