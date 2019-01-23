@@ -163,7 +163,6 @@ loss_sum=0
 err_sum=0
 
 inp_dim=data_set.shape[1]
-
 for i in range(N_batches):   
     
     max_len=0
@@ -203,12 +202,10 @@ for i in range(N_batches):
     if use_cuda:
         inp=inp.cuda()
 
-    # Forward input
-        outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
- 
-
 
     if to_do=='train':
+        # Forward input, with autograd graph active
+        outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
         
         for opt in optimizers.keys():
             optimizers[opt].zero_grad()
@@ -231,6 +228,11 @@ for i in range(N_batches):
         for opt in optimizers.keys():
             if not(strtobool(config[arch_dict[opt][0]]['arch_freeze'])):
                 optimizers[opt].step()
+
+    else:
+        with torch.no_grad(): # Forward input without autograd graph (save memory)
+            outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
+
 
     if to_do=='forward':
         for out_id in range(len(forward_outs)):
@@ -271,6 +273,8 @@ elapsed_time_chunk=time.time() - start_time
 loss_tot=loss_sum/N_batches
 err_tot=err_sum/N_batches
 
+# clearing memory
+del inp, outs_dict, data_set
 
 # save the model
 if to_do=='train':
