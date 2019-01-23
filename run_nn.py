@@ -198,14 +198,14 @@ for i in range(N_batches):
             beg_snt=data_end_index[snt_index]
             snt_index=snt_index+1
 
-        
+
     # use cuda
     if use_cuda:
         inp=inp.cuda()
-   
+
     # Forward input
-    outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
-        
+        outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
+ 
 
 
     if to_do=='train':
@@ -217,14 +217,21 @@ for i in range(N_batches):
         outs_dict['loss_final'].backward()
         
         # Gradient Clipping (th 0.1)
-        #for net in nns.keys():
-        #    torch.nn.utils.clip_grad_norm_(nns[net].parameters(), 0.1)
-        
-        
+        # grad_max_norm, grad_med_norm, grad_clip_norm = 0.0, np.inf, 0.1
+        # for net in nns.keys():
+        #     grad_norms = torch.stack(
+        #                 [p.grad.data.norm(2) for p in nns[net].parameters() if p.grad is not None]
+        #               )
+        #     grad_max_norm = max(torch.max(grad_norms).item(),grad_max_norm)
+        #     grad_med_norm = min(torch.median(grad_norms).item(),grad_med_norm)
+        #     torch.nn.utils.clip_grad_norm_(nns[net].parameters(), grad_clip_norm)
+        # grad_max_norm, grad_med_norm = round(grad_max_norm,3), round(grad_med_norm,4)
+
+
         for opt in optimizers.keys():
             if not(strtobool(config[arch_dict[opt][0]]['arch_freeze'])):
                 optimizers[opt].step()
-                
+
     if to_do=='forward':
         for out_id in range(len(forward_outs)):
             
@@ -238,8 +245,11 @@ for i in range(N_batches):
             # save the output    
             kaldi_io.write_mat(post_file[forward_outs[out_id]], out_save, data_name[i])
     else:
-        loss_sum=loss_sum+outs_dict['loss_final'].detach()
-        err_sum=err_sum+outs_dict['err_final'].detach()
+        # for printing instantaneous values
+        batch_loss = round(outs_dict['loss_final'].item(),3)
+        batch_err = round(outs_dict['err_final'].item(),3)
+        loss_sum += batch_loss
+        err_sum += batch_err
        
     # update it to the next batch 
     beg_batch=end_batch
@@ -247,12 +257,13 @@ for i in range(N_batches):
     
     # Progress bar
     if to_do == 'train':
-      status_string="Training | (Batch "+str(i+1)+"/"+str(N_batches)+")"
+        status_string="Training |L:{}, Err:{}|Len:{}| (Batch {}/{})".format(batch_loss,batch_err,
+                                                        max_len,i+1,N_batches)
     if to_do == 'valid':
-      status_string="Validating | (Batch "+str(i+1)+"/"+str(N_batches)+")"
+      status_string="Validating |L:{}, Err:{}|Len:{}| (Batch {}/{})".format(batch_loss,batch_err,max_len,i+1,N_batches)
     if to_do == 'forward':
-      status_string="Forwarding | (Batch "+str(i+1)+"/"+str(N_batches)+")"
-      
+      status_string="Forwarding |Len:{}| (Batch {}/{})".format(max_len,i+1,N_batches)
+    
     progress(i, N_batches, status=status_string)
 
 elapsed_time_chunk=time.time() - start_time 
@@ -283,8 +294,8 @@ if to_do=='forward':
 with open(info_file, "w") as text_file:
     text_file.write("[results]\n")
     if to_do!='forward':
-        text_file.write("loss=%s\n" % loss_tot.cpu().numpy())
-        text_file.write("err=%s\n" % err_tot.cpu().numpy())
+        text_file.write("loss=%s\n" % loss_tot)
+        text_file.write("err=%s\n" % err_tot)
     text_file.write("elapsed_time_read=%f (reading dataset)\n" % elapsed_time_reading)
     text_file.write("elapsed_time_load=%f (loading data on pytorch/gpu)\n" % elapsed_time_load)
     text_file.write("elapsed_time_chunk=%f (processing chunk)\n" % elapsed_time_chunk)
