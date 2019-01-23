@@ -26,6 +26,7 @@ cd $decoding_script_folder
 
 
 ## Begin configuration section
+num_threads=1
 stage=0
 cmd=utils/run.pl
 
