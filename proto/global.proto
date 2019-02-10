@@ -4,7 +4,7 @@ cfg_proto_chunk=path
 
 [exp]
 cmd=str
-run_nn_script=path
+run_nn_script=str
 out_folder=str
 seed=int(-inf,inf)
 use_cuda=bool

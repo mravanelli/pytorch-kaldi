@@ -10,15 +10,16 @@ If you use this code or part of it, please cite the following paper:
 
 The toolkit is released under a **Creative Commons Attribution 4.0 International license**. You can copy, distribute, modify the code for research, commercial and non-commercial purposes. We only ask to cite our paper referenced above.
 
-[See a short introductory video on the PyTorch-Kaldi Toolkit](https://www.youtube.com/watch?v=VDQaf0SS4K0&t=2s)
+To improve transparency and replicability of speech recognition results, we give users the possibility to release their PyTorch-Kaldi model within this repository. Feel free to contact us (or doing a pull request) for that. Moreover, if your paper uses PyTorch-Kaldi, it is also possible to advertise it in this repository.
 
-We are actively thinking about the next version of the PyTorch-Kaldi toolkit. Our goal is to make the development of speech recognition systems more easy and flexible. Please, [fill this survey to help us!](https://docs.google.com/forms/d/12jd-QP5m8NAJVpiypvtVGy1n_d2iuWaLozXq5hsg4yA/edit?usp=sharing)
+[See a short introductory video on the PyTorch-Kaldi Toolkit](https://www.youtube.com/watch?v=VDQaf0SS4K0&t=2s)
 
 
 ## Table of Contents
 * [Introduction](#introduction)
 * [Prerequisites](#prerequisites)
 * [How to install](#how-to-install)
+* [Recent Updates](#recent-updates)
 * [Tutorials:](#timit-tutorial)
   * [TIMIT tutorial](#timit-tutorial)
   * [Librispeech tutorial](#librispeech-tutorial)
@@ -34,6 +35,9 @@ We are actively thinking about the next version of the PyTorch-Kaldi toolkit. Ou
   * [How can I contribute to the project?](#how-can-i-contribute-to-the-project)
 * [EXTRA:](#speech-recognition-from-the-raw-waveform-with-sincnet)  
   * [Speech recognition from the raw waveform with SincNet](#speech-recognition-from-the-raw-waveform-with-sincnet)
+  * [Joint training between speech enhancement and ASR](#joint-training-between-speech-enhancement-and-asr)
+  * [Distant Speech Recognition with DIRHA](#distant-speech-recognition-with-dirha)
+  * [Training an autoencoder](#training-an-autoencoder)
 * [References](#references)
 
 
@@ -68,17 +72,22 @@ As a first test to check the installation, open a bash shell, type "copy-feats" 
 
 2. If not already done, install PyTorch (http://pytorch.org/). We tested our codes on PyTorch 1.0 and PyTorch 0.4. An older version of PyTorch is likely to raise errors. To check your installation, type “python” and, once entered into the console, type “import torch”, and make sure no errors appear.
 
-3. Install kaldi-io package from the kaldi-io-for-python project (https://github.com/vesis84/kaldi-io-for-python). It provides a simple interface between kaldi and python. To install it:
+3. We recommend running the code on a GPU machine. Make sure that the CUDA libraries (https://developer.nvidia.com/cuda-downloads) are installed and correctly working. We tested our system on Cuda 9.0, 9.1 and 8.0. Make sure that python is installed (the code is tested with python 2.7 and python 3.7). Even though not mandatory, we suggest using Anaconda (https://anaconda.org/anaconda/python).
 
-    ```
-    git clone https://github.com/vesis84/kaldi-io-for-python.git
-    ```
+## Recent updates
 
-    Remember to add **export PYTHONPATH=$PYTHONPATH:(your_kaldi_io_dir)** to $HOME/.bashrc and source it.
-    Type python -c "import kaldi_io" to check that the package is correctly installed. You can find more info (including some reading and writing tests) on https://github.com/vesis84/kaldi-io-for-python.
+**5 Feb. 2019: updates:**
+1. Our toolkit now supports parallel data loading (i.e., the next chunk is stored in memory while processing the current chunk). This allows a significant speed up.
+2. When performing monophone regularization users can now set “dnn_lay = N_lab_out_mono”. This way the number of monophones is automatically inferred by our toolkit.
+3. We integrated the kaldi-io toolkit from the [kaldi-io-for-python](https://github.com/vesis84/kaldi-io-for-python) project into data_io-py.
+4. We provided a better hyperparameter setting for SincNet ([see this section](#speech-recognition-from-the-raw-waveform-with-sincnet))
+5. We released some baselines with the DIRHA dataset ([see this section](#distant-speech-recognition-with-dirha)). We also provide some configuration examples for a simple autoencoder ([see this section](#training-an-autoencoder)) and for a system that jointly trains a speech enhancement and a speech recognition module ([see this section](#joint-training-between-speech-enhancement-and-asr))
+6. We fixed some minor bugs.
+
+**Notes on the next version:**
+In the next version, we plan to further extend the functionalities of our toolkit, supporting more models and features formats. The goal is to make our toolkit suitable for other speech-related tasks such as end-to-end speech recognition, speaker-identification, keyword spotting, speech separation, speech activity detection, speech enhancement, etc. If you would like to propose some novel functionalities, please give us your feedback by [filling this survey](https://docs.google.com/forms/d/12jd-QP5m8NAJVpiypvtVGy1n_d2iuWaLozXq5hsg4yA/edit?usp=sharing).
 
 
-4. We recommend running the code on a GPU machine. Make sure that the CUDA libraries (https://developer.nvidia.com/cuda-downloads) are installed and correctly working. We tested our system on Cuda 9.0, 9.1 and 8.0. Make sure that python is installed (the code is tested with python 2.7 and python 3.6). Even though not mandatory, we suggest using Anaconda (https://anaconda.org/anaconda/python).
 
 ## How to install
 To install PyTorch-Kaldi, do the following steps:
@@ -99,7 +108,7 @@ In the following, we provide a short tutorial of the PyTorch-Kaldi toolkit based
 
 1. Make sure you have the TIMIT dataset. If not, it can be downloaded from the LDC website (https://catalog.ldc.upenn.edu/LDC93S1).
 
-2. Make sure Kaldi and PyTorch installations are fine. Make also sure that your KALDI paths are currently working (you should add the kaldi paths into the .bashrc as reported in the section "Prerequisites"). For instance, type "copy-feats" and "hmm-info" and make sure no errors appear. 
+2. Make sure Kaldi and PyTorch installations are fine. Make also sure that your KALDI paths are currently working (you should add the Kaldi paths into the .bashrc as reported in the section "Prerequisites"). For instance, type "copy-feats" and "hmm-info" and make sure no errors appear. 
 
 3. Run the Kaldi s5 baseline of TIMIT. This step is necessary to compute features and labels later used to train the PyTorch neural network. We recommend running the full timit s5 recipe (including the DNN training). This way all the necessary files are created and the user can directly compare the results obtained by Kaldi with that achieved with our toolkit.
 
@@ -146,13 +155,9 @@ This script starts a full ASR experiment and performs training, validation, forw
 **Note that you can stop the experiment at any time.** If you run again the script it will automatically start from the last chunk correctly processed. The training could take a couple of hours, depending on the available GPU. Note also that if you would like to change some parameters of the configuration file (e.g., n_chunks=,fea_lst=,batch_size_train=,..) you must specify a different output folder (output_folder=).
 
 **Debug:** If you run into some errors, we suggest to do the following checks:
-1.	Take a look into the standard output.
-2.	If it is not helpful, take a look into the log.log file.
-3.	If the error is still not clear, run:
-```
-python run_nn.py exp/TIMIT_MLP_basic/exp_files/train_TIMIT_tr_ep000_ck00.cfg
-```
-In this way you “manually” run the training of the first chunk of speech and you can see all the errors directly from the standard output.
+1.    Take a look into the standard output.
+2.    If it is not helpful, take a look into the log.log file.
+3.    Take a look into the function run_nn into the core.py library. Add some prints in the various part of the function to isolate the problem and figure out the issue.
 
 
 8. At the end of training, the phone error rate (PER\%) is appended into the res.res file. To see more details on the decoding results, you can go into “decoding_test” in the output folder and take a look to the various files created.  For this specific example, we obtained the following *res.res* file:
@@ -283,15 +288,10 @@ You can take a look into the results obtained [here](https://bitbucket.org/mrava
 The main script to run an ASR experiment is **run_exp.py**. This python script performs training, validation, forward, and decoding steps.  Training is performed over several epochs, that progressively process all the training material with the considered neural network.
 After each training epoch, a validation step is performed to monitor the system performance on *held-out* data. At the end of training, the forward phase is performed by computing the posterior probabilities of the specified test dataset. The posterior probabilities are normalized by their priors (using a count file) and stored into an ark file. A decoding step is then performed to retrieve the final sequence of words uttered by the speaker in the test sentences.
 
-The *run_exp.py* script takes in input a global config file (e.g., *cfg/TIMIT_MLP_mfcc.cfg*) that specifies all the needed options to run a full experiment. The code *run_exp.py* calls for  **run_nn.py** that performs training, validation, and forward operations on each chunk of data.
-The code *run_nn.py* takes in input a chunk-specific config file (e.g, *run_nn.py exp/TIMIT_MLP_mfcc/exp_files/train_TIMIT_tr+TIMIT_dev_ep000_ck00.cfg*) that specifies all the needed parameters for running a single-chunk experiment. The run_nn.py outputs some info filles (e.g., *exp/TIMIT_MLP_mfcc/exp_files/train_TIMIT_tr+TIMIT_dev_ep000_ck00.info*) that summarize losses and errors of the processed chunk.
+The *run_exp.py* script takes in input a global config file (e.g., *cfg/TIMIT_MLP_mfcc.cfg*) that specifies all the needed options to run a full experiment. The code *run_exp.py* calls another function  **run_nn** (see core.py library) that performs training, validation, and forward operations on each chunk of data.
+The function *run_nn* takes in input a chunk-specific config file (e.g, exp/TIMIT_MLP_mfcc/exp_files/train_TIMIT_tr+TIMIT_dev_ep000_ck00.cfg*) that specifies all the needed parameters for running a single-chunk experiment. The run_nn function outputs some info filles (e.g., *exp/TIMIT_MLP_mfcc/exp_files/train_TIMIT_tr+TIMIT_dev_ep000_ck00.info*) that summarize losses and errors of the processed chunk.
 
 The results are summarized into the *res.res* files, while errors and warnings are redirected into the *log.log* file.
-
-*Why run_nn.py*?
-The current architecture implements single-chunk operations in a different python script (*run_nn.py*). In principle, all these operations could have been implemented within the main *run_exp.py* script.  We used a separate script for the following reasons:
-- in many clusters, the job priority is assigned according to the estimated time required by the script to complete the job. PyTorch-Kaldi allows running new jobs for every processed chunk using the “cmd” field in the global config file (cmd=”qsub -ngpu=1 -walltime=00:00:10”), allowing users to specify low wall-times.
-- Having two separate scripts allows an easier debug. For instance, a single chunk operation can be directly run with *run_nn.py train_TIMIT_tr+TIMIT_dev_ep000_ck00.cfg* without running the run_exp.py from scratch.
 
 
 ## Description of the configuration files:
@@ -311,7 +311,7 @@ The current version of the config file first specifies the paths of the global a
 ```
 [exp]
 cmd = 
-run_nn_script = run_nn.py
+run_nn_script = run_nn
 out_folder = exp/TIMIT_MLP_basic5
 seed = 1234
 use_cuda = True
@@ -319,7 +319,7 @@ multi_gpu = False
 save_gpumem = False
 n_epochs_tr = 24
 ```
-The section [exp] contains some important fields, such as the output folder (*out_folder*) and the path of the chunk-specific processing script *run_nn.py*. The field *N_epochs_tr* specifies the selected number of training epochs. Other options about using_cuda, multi_gpu, and save_gpumem can be enabled by the user. The field *cmd* can be used to append a command to run the script on a HPC cluster.
+The section [exp] contains some important fields, such as the output folder (*out_folder*) and the path of the chunk-specific processing script *run_nn* (by default this function should be implemented in the core.py library). The field *N_epochs_tr* specifies the selected number of training epochs. Other options about using_cuda, multi_gpu, and save_gpumem can be enabled by the user. The field *cmd* can be used to append a command to run the script on a HPC cluster.
 
 ```
 [dataset1]
@@ -389,7 +389,7 @@ forward_with = TIMIT_test
 ```
 
 This section tells how the data listed into the sections *[datasets\*]* are used within the *run_exp.py* script. 
-The first line means that we perform training with the data called *TIMIT_tr*. Note that this dataset name must appear in one of the dataset sections, otherwise the config parser will raise an error. Similarly,  the second and the third lines specify the datass used for validation and forward phases, respectively.
+The first line means that we perform training with the data called *TIMIT_tr*. Note that this dataset name must appear in one of the dataset sections, otherwise the config parser will raise an error. Similarly,  the second and the third lines specify the data used for validation and forward phases, respectively.
 
 ```
 [batches]
@@ -452,7 +452,7 @@ The field *arch_library* specifies where the model is coded (e.g. *neural_nets.p
 
 The field *arch_pretrain_file* can be used to pre-train the neural network with a previously-trained architecture, while *arch_freeze* can be set to *False* if you want to train the parameters of the architecture during training and should be set to *True* do keep the parameters fixed (i.e., frozen) during training. The section *arch_seq_model* indicates if the architecture is sequential (e.g. RNNs) or non-sequential (e.g., a  feed-forward MLP or CNN). The way PyTorch-Kaldi processes the input batches is different in the two cases. For recurrent neural networks (*arch_seq_model=True*) the sequence of features is not randomized (to preserve the elements of the sequences), while for feedforward models  (*arch_seq_model=False*) we randomize the features (this usually helps to improve the performance). In the case of multiple architectures, sequential processing is used if at least one of the employed architectures is marked as sequential  (*arch_seq_model=True*).
 
-The other hyperparameters are specific of the considered architecture (they depend on how the class MLP is actually implemented by the user) and can define number and typology of hidden layers, batch and layer normalizations, and other parameters.
+Note that the hyperparameters starting with "arch_" and "opt_" are mandatory and must be present in all the architecture specified in the config file. The other hyperparameters (e.g., dnn_*, ) are specific of the considered architecture (they depend on how the class MLP is actually implemented by the user) and can define number and typology of hidden layers, batch and layer normalizations, and other parameters.
 Other important parameters are related to the optimization of the considered architecture. For instance, *arch_lr* is the learning rate, while *arch_halving_factor* is used to implement learning rate annealing. In particular, when the relative performance improvement on the dev-set between two consecutive epochs is smaller than that specified in the *arch_improvement_threshold* (e.g, arch_improvement_threshold) we multiply the learning rate by the *arch_halving_factor* (e.g.,*arch_halving_factor=0.5*). The field arch_opt specifies the type of optimization algorithm. We currently support SGD, Adam, and Rmsprop. The other parameters are specific to the considered optimization algorithm (see the PyTorch documentation for an exact meaning of all the optimization-specific hyperparameters).
 Note that the different architectures defined in *[archictecture\*]* can have different optimization hyperparameters and they can even use a different optimization algorithm.
 
@@ -526,7 +526,7 @@ To make the code more flexible, the config parameters can also be specified with
 ```    
 The script will replace the learning rate in the specified cfg file with the specified lr value. The modified config file is then stored into *out_folder/config.cfg*.
 
-The script *run_exp.py* automatically creates chunk-specific config files, that are used by *run_nn.py* to perform a single chunk training. The structure of chunk-specific cfg files is very similar to that of the global one. The main difference is a field *to_do={train, valid, forward}* that specifies the type of processing to on the features chunk specified in the field *fea*.
+The script *run_exp.py* automatically creates chunk-specific config files, that are used by the *run_nn* function to perform a single chunk training. The structure of chunk-specific cfg files is very similar to that of the global one. The main difference is a field *to_do={train, valid, forward}* that specifies the type of processing to on the features chunk specified in the field *fea*.
 
 *Why proto files?*
 Different neural networks, optimization algorithms, and HMM decoders might depend on a different set of hyperparameters. To address this issue, our current solution is based on the definition of some prototype files (for global, chunk, architecture config files). In general, this approach allows a more transparent check of the fields specified into the global config file. Moreover, it allows users to easily add new parameters without changing any line of the python code.
@@ -552,7 +552,7 @@ The parameter *dnn_act* is again a list of string that sets the activation funct
 
 3. Write a PyTorch class implementing your model.
  Open the library *neural_networks.py* and look at some of the models already implemented. For simplicity, you can start taking a look into the class MLP.  The classes have two mandatory methods: **init** and **forward**. The first one is used to initialize the architecture, the second specifies the list of computations to do. 
-The method *init* takes in input two variables that are automatically computed within the *run_nn.py* script.  **inp_dim** is simply the dimensionality of the neural network input, while **options** is a dictionary containing all the parameters specified into the section *architecture* of the configuration file.  
+The method *init* takes in input two variables that are automatically computed within the *run_nn* function.  **inp_dim** is simply the dimensionality of the neural network input, while **options** is a dictionary containing all the parameters specified into the section *architecture* of the configuration file.  
 For instance, you can access to the DNN activations of the various layers  in this way: 
 ```options['dnn_lay'].split(',')```. 
 As you might see from the MLP class, the initialization method defines and initializes all the parameters of the neural network. The forward method takes in input a tensor **x** (i.e., the input data) and outputs another vector containing x. 
@@ -611,10 +611,8 @@ opt_nesterov=False
 python run_exp.sh cfg/myDNN_exp.cfg
 ```
 
-7. To debug the model you can first take a look at the standard output. The config file is automatically parsed by the *run_exp.sh* and it raises errors in case of possible problems. You can also take a look into the *log.log* file to see additional information on the possible errors. If the problem is due to the model, it could make sense to only run a single-chunk training and analyze in detail the errors. To do it, you can directly run the *run_nn.py* script in this way:
-```
-python run_nn.py TIMIT_MLP_mfcc_baseline/exp_files/train_TIMIT_tr_ep000_ck00.cfg
-```
+7. To debug the model you can first take a look at the standard output. The config file is automatically parsed by the *run_exp.sh* and it raises errors in case of possible problems. You can also take a look into the *log.log* file to see additional information on the possible errors. 
+
 
 When implementing a new model, an important debug test consists of doing an overfitting experiment (to make sure that the model is able to overfit a tiny dataset). If the model is not able to overfit, it means that there is a major bug to solve.
 
@@ -634,7 +632,7 @@ python run_exp.py $cfg_file
 ```
 
 ## How can I use my own dataset
-PyTorch-Kaldi can be usewith any speech dataset. To use your own dataset, the steps to take are similar to those discussed in the TIMIT/Librispeech tutorials. In general, what you have to do is the following:
+PyTorch-Kaldi can be used with any speech dataset. To use your own dataset, the steps to take are similar to those discussed in the TIMIT/Librispeech tutorials. In general, what you have to do is the following:
 1. Run the Kaldi recipe with your dataset. Please, see the Kaldi website to have more information on how to perform data preparation.
 2. Compute the alignments on training, validation, and test data.
 3. Write a PyTorch-Kaldi config file *$cfg_file*.
@@ -645,12 +643,12 @@ The current version of PyTorch-Kaldi supports input features stored with the Kal
 Moreover, you can take a look into our utility called save_raw_fea.py. This script generates Kaldi ark files containing raw features, that are later used to train neural networks fed by the raw waveform directly (see the section about processing audio with SincNet).
 
 ## How can I transcript my own audio files
-The current version of Pytorch-Kaldi supports the standard production process of using a Pytorch-Kaldi pretrained acoustic model to transcript one or multiples .wav files. It is important to understand that you must have a trained Pytorch-Kaldi model. While you don't need labels or alignments anymore, Pytorch-Kaldi still needs many files to transcript a new audio file:
+The current version of Pytorch-Kaldi supports the standard production process of using a Pytorch-Kaldi pre-trained acoustic model to transcript one or multiples .wav files. It is important to understand that you must have a trained Pytorch-Kaldi model. While you don't need labels or alignments anymore, Pytorch-Kaldi still needs many files to transcript a new audio file:
 1. The features and features list *feats.scp* (with .ark files, see #how-can-i-plug-my-own-features)
 2. The decoding graph (usually created with mkgraph.sh during previous model training such as triphones models)
 3. The *final.mdl* file that has been used to create the acoustic features (only for decoding, not mandatory if you have your custom decoding script)
 
-Once you have all these files, you can start adding your dataset section to the global configuration file. The easiest way is to copy the *cfg* file used to train your accoustic model and just modify by adding a new *[dataset]*:
+Once you have all these files, you can start adding your dataset section to the global configuration file. The easiest way is to copy the *cfg* file used to train your acoustic model and just modify by adding a new *[dataset]*:
 ```
 [dataset4]
 data_name = myWavFile
@@ -670,12 +668,12 @@ train_with = TIMIT_tr
 valid_with = TIMIT_dev
 forward_with = myWavFile
 ```
-The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip these informations to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more than the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk). In a production scenario, you might need to transcript a huge number of audio files, and your don't wan't to create as much as needed .cfg file. In this extent, and after creating this initial production .cfg file (you can leave the path blank), you can call the run_exp.py script with specific arguments referring to your different.wav features:
+The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip these informations to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more than the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk). In a production scenario, you might need to transcript a huge number of audio files, and you don't want to create as much as needed .cfg file. In this extent, and after creating this initial production .cfg file (you can leave the path blank), you can call the run_exp.py script with specific arguments referring to your different.wav features:
 ```
 python run_exp.py cfg/TIMIT_baselines/TIMIT_MLP_fbank_prod.cfg --dataset4,fea,0,fea_lst="myWavFilePath/data/feats.scp" --dataset4,lab,0,lab_data_folder="myWavFilePath/data/" --dataset4,lab,0,lab_graph="myWavFilePath/exp/tri3/graph/"
 ```
 
-This command will internally alter the configuration file with your specified paths, and run and your defined features! Note that passing long arguments to the run_exp.py script requires a specific notation. *--dataset4* specifies the name of the created section, *fea* is the name of the higher level field, *fea_lst* or *lab_graph* are the name of the lowest level field you want to change. The *0* is here to indicate which lowest level field you want to alter, indeed some configuration files may contain multiple *lab_graph* per dataset! Therefore, *0* indicates the first occurence, *1* the second ... Paths MUST be encapsulated by " " to be interpreted as full strings! Note that you need to alter the *data_name* and *forward_with* fields if you don't wan't different .wav files transcriptions to erase each other (decoding files are stored accordingly to the field*data_name*). ``` --dataset4,data_name=MyNewName --data_use,forward_with=MyNewName ```.
+This command will internally alter the configuration file with your specified paths, and run and your defined features! Note that passing long arguments to the run_exp.py script requires a specific notation. *--dataset4* specifies the name of the created section, *fea* is the name of the higher level field, *fea_lst* or *lab_graph* are the name of the lowest level field you want to change. The *0* is here to indicate which lowest level field you want to alter, indeed some configuration files may contain multiple *lab_graph* per dataset! Therefore, *0* indicates the first occurrence, *1* the second ... Paths MUST be encapsulated by " " to be interpreted as full strings! Note that you need to alter the *data_name* and *forward_with* fields if you don't want different .wav files transcriptions to erase each other (decoding files are stored accordingly to the field*data_name*). ``` --dataset4,data_name=MyNewName --data_use,forward_with=MyNewName ```.
 
 ## How can I contribute to the project
 The project is still in its initial phase and we invite all potential contributors to participate. We hope to build a community of developers larger enough to progressively maintain, improve, and expand the functionalities of our current toolkit.  For instance, it could be helpful to report any bug or any suggestion to improve the current version of the code. People can also contribute by adding additional neural models, that can eventually make richer the set of currently-implemented architectures.
@@ -687,6 +685,12 @@ The project is still in its initial phase and we invite all potential contributo
 
 SincNet is a convolutional neural network recently proposed to process raw audio waveforms. In particular, SincNet encourages the first layer to discover more meaningful filters by exploiting parametrized sinc functions. In contrast to standard CNNs, which learn all the elements of each filter, only low and high cutoff frequencies of band-pass filters are directly learned from data. This inductive bias offers a very compact way to derive a customized filter-bank front-end, that only depends on some parameters with a clear physical meaning.
 
+For a more detailed description of the SincNet model, please refer to the following papers:
+
+- *M. Ravanelli, Y. Bengio, "Speaker Recognition from raw waveform with SincNet", in Proc. of SLT 2018 [ArXiv](https://arxiv.org/abs/1808.00158)*
+
+- *M. Ravanelli, Y.Bengio, "Interpretable Convolutional Filters with SincNet", in Proc. of NIPS@IRASL 2018 [ArXiv](https://arxiv.org/abs/1811.09725)*
+
 To use this model for speech recognition on TIMIT, to the following steps:
 1. Follows the steps described in the “TIMIT tutorial”.
 2. Save the raw waveform into the Kaldi ark format. To do it, you can use the save_raw_fea.py utility in our repository. The script saves the input signals into a binary Kaldi archive, keeping the alignments with the pre-computed labels. You have to run it for all the data chunks (e.g., train, dev, test). It can also specify the length of the speech chunk (*sig_wlen=200 # ms*) composing each frame.
@@ -695,12 +699,147 @@ To use this model for speech recognition on TIMIT, to the following steps:
 python ./run_exp.sh cfg/TIMIT_baselines/TIMIT_SincNet_raw.cfg
 ```    
 
-4. With this architecture, we have obtained a PER(%)=18.1%. A standard CNN fed the same features gives us a PER(%)=18.3%. Please, see [here](https://bitbucket.org/mravanelli/pytorch-kaldi-exp-timit/src/master/) to access all the details about our results.
+4. With this architecture, we have obtained a **PER(%)=17.1%**. A standard CNN fed the same features gives us a **PER(%)=18.%**. Please, see [here](https://bitbucket.org/mravanelli/pytorch-kaldi-exp-timit/src/master/) to take a look into our results. Our results on SincNet outperforms results obtained with MFCCs and FBANKs fed by standard feed-forward networks.
+
+In the following table, we compare the result of SincNet with other feed-forward neural network:
+
+| Model  | WER(\%) | 
+| ------ | -----|
+|  MLP -fbank  | 18.7 | 
+|  MLP -mfcc  | 18.2 | 
+|  CNN -raw  | 18.1 | 
+|SincNet -raw | **17.2**  | 
 
 
+## Joint training between speech enhancement and ASR
+In this section we show how to use PyTorch-Kaldi to jointly train a cascade between a speech enhancement and a speech recognition neural networks. The speech enhancement has the goal of improving the quality of the speech signal by minimizing the MSE between the clean and noisy features. The enhanced features then feed another neural network that predicts context-dependent phone states.
+
+In the following, we report a toy-task example based on a reverberated version of TIMIT, that is only intended to show how users should set the config file to train such a combination of neural networks. 
+ Even though some implementation details (and the adopted datasets are different), this tutorial is inspired to this paper:
+
+- *M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Batch-normalized joint training for DNN-based distant speech recognition", in Proceedings of STL 2016 [arXiv](https://arxiv.org/abs/1703.08471)*
+
+
+To run the system do the following steps:
+
+1- Make sure you have the standard clean version of TIMIT available.
+2- Run the *Kaldi s5* baseline of TIMIT. This step is necessary to compute the clean features (that will be the labels of the speech enhancement system) and the alignments (that will be the labels of the speech recognition system). We recommend running the full timit s5 recipe (including the DNN training).
+3- The standard TIMIT recipe uses MFCCs features. In this tutorial, instead, we use FBANK features. To compute  FBANK features run the following script in *$KALDI_ROOT/egs/TIMIT/s5* :
+```    
+feadir=fbank
+
+for x in train dev test; do
+  steps/make_fbank.sh --cmd "$train_cmd" --nj $feats_nj data/$x exp/make_fbank/$x $feadir
+  steps/compute_cmvn_stats.sh data/$x exp/make_fbank/$x $feadir
+done
+```    
+
+4- Go to [this external repository](https://github.com/mravanelli/pySpeechRev/blob/master/README.md) and follow  the steps to generate a reverberated version of TIMIT starting from the clean one. Note that this is just a *toy task* that is only helpful to show how setting up a joint-training system.
+
+5- Compute the FBANK features for the TIMIT_rev dataset. To do it, you can copy the scripts in *$KALDI_ROOT/egs/TIMIT/ into $KALDI_ROOT/egs/TIMIT_rev/*. Please, copy also the data folder. Note that the audio files in the TIMIT_rev folders are saved with the standard *WAV* format, while TIMIT is released with the *SPHERE* format. To bypass this issue, open the files *data/train/wav.scp*, *data/dev/wav.scp*, *data/test/wav.scp* and delete the part about *SPHERE* reading (e.g., */home/mirco/kaldi-trunk/tools/sph2pipe_v2.5/sph2pipe -f wav*). You also have to change the paths from the standard TIMIT to the reverberated one (e.g. replace /TIMIT/ with /TIMIT_rev/). Remind to remove the final pipeline symbol“ |”. Save the changes and run the computation of the fbank features in this way:
+
+``` 
+feadir=fbank
+
+for x in train dev test; do
+  steps/make_fbank.sh --cmd "$train_cmd" --nj $feats_nj data/$x exp/make_fbank/$x $feadir
+  steps/compute_cmvn_stats.sh data/$x exp/make_fbank/$x $feadir
+done
+``` 
+
+6- Once features are computed, open the following config file: 
+
+```
+cfg/TIMIT_baselines/TIMIT_rev/TIMIT_joint_training_liGRU_fbank.cfg
+``` 
+
+Remember to change the paths according to where data are stored in your machine. As you can see, we consider two types of features. The *fbank_rev* features are computed from the TIMIT_rev dataset, while the *fbank_clean* features are derived from the standard TIMIT dataset and are used as targets for the speech enhancement neural network. 
+As you can see in the *[model]* section of the config file, we have the cascade between networks doing speech enhancement and speech recognition. The speech recognition architecture jointly estimates both context-dependent and monophone targets (thus using the so-called monophone regularization). 
+To run an experiment type the following command:
+``` 
+python run_exp.py  cfg/TIMIT_baselines/TIMIT_rev/TIMIT_joint_training_liGRU_fbank.cfg
+``` 
+
+7- Results
+With this configuration file you should obtain a **Phone Error Rate (PER)=28.1%**. Note that some oscillations around this performance are more than natural and are due to different initialization of the neural parameters.
+
+You can take a closer look into our results [here](https://bitbucket.org/mravanelli/pytorch-kaldi-exp-timit/src/master/TIMIT_rev/TIMIT_joint_training_liGRU_fbank/)
+
+## Distant Speech Recognition with DIRHA
+In this tutorial we use the DIRHA-English dataset to perform a distant speech recognition experiment. The DIRHA English Dataset is a **multi-microphone speech corpus** being developed under the EC project DIRHA. The corpus is composed of both real and simulated sequences recorded with 32 sample-synchronized microphones in a domestic environment. The database contains signals of different characteristics in terms of noise and reverberation making it suitable for various multi-microphone signal processing and distant speech recognition tasks. The part of the dataset currently released is composed of 6 native US speakers (3 Males, 3 Females) uttering 409 wall-street journal sentences.  The training data have been created using a realistic data contamination approach, that is based on contaminating the clean speech *wsj-5k* sentences with high-quality multi-microphone impulse responses measured in the targeted environment. For more details on this dataset, please refer to the following papers:
+
+- *M. Ravanelli, L. Cristoforetti, R. Gretter, M. Pellin, A. Sosi, M. Omologo, "The DIRHA-English corpus and related tasks for distant-speech recognition in domestic environments", in Proceedings of ASRU 2015. [ArXiv](https://arxiv.org/abs/1710.02560)*
+
+- *M. Ravanelli, P. Svaizer, M. Omologo, "Realistic Multi-Microphone Data Simulation for Distant Speech Recognition",  in Proceedings of Interspeech 2016. [ArXiv](https://arxiv.org/abs/1711.09470)*
+
+In this tutorial, we use the aforementioned simulated data for training (using LA6 microphone), while test is performed using the real recordings (LA6).  This task is very realistic, but also very challenging. The speech signals are characterized by a reverberation time of about 0.7 seconds. Non-stationary domestic noises (such as vacuum cleaner, steps, phone rings, etc.) are also present in the real recordings.
+
+
+Let’s start now with the practical tutorial.
+
+1- If not available, [download the DIRHA dataset from the LDC website](https://catalog.ldc.upenn.edu/LDC2018S01). LDC releases the full dataset for a small fee.
+
+2- [Go this external reposotory](https://github.com/SHINE-FBK/DIRHA_English_wsj). As reported in this repository, you have to generate the contaminated WSJ dataset with the provided MATLAB script. Then, you can run the proposed KALDI baseline to have features and labels ready for our pytorch-kaldi toolkit.
+
+3- Open the following configuration file:
+``` 
+cfg/DIRHA_baselines/DIRHA_liGRU_fmllr.cfg
+``` 
+The latter configuration file implements a simple RNN model based on a Light Gated Recurrent Unit (Li-GRU). We used fMLLR as input features. Change the paths and run the following command:
+
+``` 
+python run_exp.py cfg/DIRHA_baselines/DIRHA_liGRU_fmllr.cfg
+``` 
+
+4- Results:
+The aforementioned system should provide  **Word Error Rate (WER%)=23.2%**. 
+You can find the results obtained by us [here](https://bitbucket.org/mravanelli/pytorch-kaldi-dirha-exp/). 
+
+Using the other configuration files in the *cfg/DIRHA_baselines* folder you can perform experiments with different setups. With the provided configuration files you can obtain the following results:
+
+| Model  | WER(\%) | 
+| ------ | -----|
+|  MLP  | 26.1 | 
+|GRU| 25.3 | 
+|Li-GRU| **23.8**  | 
+
+## Training an autoencoder
+The current version of the repository is mainly designed for speech recognition experiments. We are actively working an a new version, which is much more flexible and can manage input/output different from Kaldi features/labels. Even with the current version, however, it is possible to implement other systems, such as an autoencoder.
+
+An autoencoder is a neural network whose inputs and outputs are the same. The middle layer normally contains a bottleneck that forces our representations to compress the information of the input. In this tutorial, we provide a toy example based on the TIMIT dataset. For instance, see the following configuration file:
+``` 
+cfg/TIMIT_baselines/TIMIT_MLP_fbank_autoencoder.cfg
+``` 
+Our input are the standard 40-dimensional fbank coefficients that are gathered using a context windows of 11 frames (i.e., the total dimensionality of our input is 440). A feed-forward neural network (called MLP_encoder) encodes our features into a 100-dimensional representation. The decoder (called MLP_decoder) is fed by the learned representations and tries to reconstruct the output. The system is trained with **Mean Squared Error (MSE)** metric.
+Note that in the [Model] section we added this line “err_final=cost_err(dec_out,lab_cd)” at the end. The current version of the model, in fact, by default needs that at least one label is specified (we will remove this limit in the next version). 
+
+You can train the system running the following command:
+``` 
+python run_exp.py cfg/TIMIT_baselines/TIMIT_MLP_fbank_autoencoder.cfg
+``` 
+The results should look like this:
+
+``` 
+ep=000 tr=['TIMIT_tr'] loss=0.139 err=0.999 valid=TIMIT_dev loss=0.076 err=1.000 lr_architecture1=0.080000 lr_architecture2=0.080000 time(s)=41
+ep=001 tr=['TIMIT_tr'] loss=0.098 err=0.999 valid=TIMIT_dev loss=0.062 err=1.000 lr_architecture1=0.080000 lr_architecture2=0.080000 time(s)=39
+ep=002 tr=['TIMIT_tr'] loss=0.091 err=0.999 valid=TIMIT_dev loss=0.058 err=1.000 lr_architecture1=0.040000 lr_architecture2=0.040000 time(s)=39
+ep=003 tr=['TIMIT_tr'] loss=0.088 err=0.999 valid=TIMIT_dev loss=0.056 err=1.000 lr_architecture1=0.020000 lr_architecture2=0.020000 time(s)=38
+ep=004 tr=['TIMIT_tr'] loss=0.087 err=0.999 valid=TIMIT_dev loss=0.055 err=0.999 lr_architecture1=0.010000 lr_architecture2=0.010000 time(s)=39
+ep=005 tr=['TIMIT_tr'] loss=0.086 err=0.999 valid=TIMIT_dev loss=0.054 err=1.000 lr_architecture1=0.005000 lr_architecture2=0.005000 time(s)=39
+ep=006 tr=['TIMIT_tr'] loss=0.086 err=0.999 valid=TIMIT_dev loss=0.054 err=1.000 lr_architecture1=0.002500 lr_architecture2=0.002500 time(s)=39
+ep=007 tr=['TIMIT_tr'] loss=0.086 err=0.999 valid=TIMIT_dev loss=0.054 err=1.000 lr_architecture1=0.001250 lr_architecture2=0.001250 time(s)=39
+ep=008 tr=['TIMIT_tr'] loss=0.086 err=0.999 valid=TIMIT_dev loss=0.054 err=0.999 lr_architecture1=0.000625 lr_architecture2=0.000625 time(s)=41
+ep=009 tr=['TIMIT_tr'] loss=0.086 err=0.999 valid=TIMIT_dev loss=0.054 err=0.999 lr_architecture1=0.000313 lr_architecture2=0.000313 time(s)=38
+```
+You should only consider the field "loss=". The filed "err=" only contains not useuful information in this case (for the aforementioned reason).
+You can take a look into the generated features typing the following command:
+
+``` 
+copy-feats ark:exp/TIMIT_MLP_fbank_autoencoder/exp_files/forward_TIMIT_test_ep009_ck00_enc_out.ark  ark,t:- | more
+``` 
 
 ## References
-[1] M. Ravanelli, T. Parcollet, Y. Bengio, "The PyTorch-Kaldi Speech Recognition Toolkit", [ArxIv]
+[1] M. Ravanelli, T. Parcollet, Y. Bengio, "The PyTorch-Kaldi Speech Recognition Toolkit", [ArxIv](https://arxiv.org/abs/1811.07453)
 
 [2] M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Improving speech recognition by revising gated recurrent units", in Proceedings of Interspeech 2017. [ArXiv](https://arxiv.org/abs/1710.00641)
 
@@ -708,6 +847,8 @@ python ./run_exp.sh cfg/TIMIT_baselines/TIMIT_SincNet_raw.cfg
 
 [4] M. Ravanelli, "Deep Learning for Distant Speech Recognition", PhD Thesis, Unitn 2017. [ArXiv](https://arxiv.org/abs/1712.06086)
 
+[5] T. Parcollet, M. Ravanelli, M. Morchid, G. Linarès, C. Trabelsi, R. De Mori, Y. Bengio, "Quaternion Recurrent Neural Networks", in Proceedings of ICLR 2019 [ArXiv](https://arxiv.org/abs/1806.04418)
 
+[6] T. Parcollet, M. Morchid, G. Linarès, R. De Mori, "Bidirectional Quaternion Long-Short Term Memory Recurrent Neural Networks for Speech Recognition", in Proceedings of ICASSP 2019 [ArXiv](https://arxiv.org/abs/1811.02566)
 
 
