@@ -245,7 +245,11 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
         
         # Progress bar
         if to_do == 'train':
-          status_string="Training | (Batch "+str(i+1)+"/"+str(N_batches)+")"
+          status_string="Training | (Batch "+str(i+1)+"/"+str(N_batches)+")"+" | L:" +str(round(outs_dict['loss_final'].detach().item(),3))
+          if i==N_batches-1:
+             status_string="Training | (Batch "+str(i+1)+"/"+str(N_batches)+")"
+
+             
         if to_do == 'valid':
           status_string="Validating | (Batch "+str(i+1)+"/"+str(N_batches)+")"
         if to_do == 'forward':

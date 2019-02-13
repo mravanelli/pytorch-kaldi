@@ -21,7 +21,7 @@ from shutil import copyfile
 import re
 from distutils.util import strtobool
 import importlib
-
+import math
 
 # Reading global cfg file (first argument-mandatory file) 
 cfg_file=sys.argv[1]
@@ -58,6 +58,7 @@ cfg_file_proto_chunk=config['cfg_proto']['cfg_proto_chunk']
 
 cmd=config['exp']['cmd']
 N_ep=int(config['exp']['N_epochs_tr'])
+N_ep_str_format='0'+str(max(math.ceil(np.log10(N_ep)),1))+'d'
 tr_data_lst=config['data_use']['train_with'].split(',')
 valid_data_lst=config['data_use']['valid_with'].split(',')
 forward_data_lst=config['data_use']['forward_with'].split(',')
@@ -148,20 +149,20 @@ for ep in range(N_ep):
     tr_error_tot=0
     tr_time_tot=0
     
-    print('------------------------------ Epoch %s / %s ------------------------------'%(format(ep, "03d"),format(N_ep-1, "03d")))
+    print('------------------------------ Epoch %s / %s ------------------------------'%(format(ep, N_ep_str_format),format(N_ep-1, N_ep_str_format)))
 
     for tr_data in tr_data_lst:
         
         # Compute the total number of chunks for each training epoch
-        N_ck_tr=compute_n_chunks(out_folder,tr_data,ep,'train')
-    
+        N_ck_tr=compute_n_chunks(out_folder,tr_data,ep,N_ep_str_format,'train')
+        N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_tr)),1))+'d'
      
         # ***Epoch training***
         for ck in range(N_ck_tr):
             
             
             # paths of the output files (info,model,chunk_specific cfg file)
-            info_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.info'
+            info_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.info'
             
             if ep+ck==0:
                 model_files_past={}
@@ -172,7 +173,7 @@ for ep in range(N_ep):
             for arch in pt_files.keys():
                 model_files[arch]=info_file.replace('.info','_'+arch+'.pkl')
             
-            config_chunk_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.cfg'
+            config_chunk_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
             
             # update learning rate
             change_lr_cfg(config_chunk_file,lr)
@@ -204,7 +205,7 @@ for ep in range(N_ep):
             
             # update pt_file (used to initialized the DNN for the next chunk)  
             for pt_arch in pt_files.keys():
-                pt_files[pt_arch]=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_'+pt_arch+'.pkl'
+                pt_files[pt_arch]=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'_'+pt_arch+'.pkl'
                 
             # remove previous pkl files
             if len(model_files_past.keys())>0:
@@ -214,7 +215,7 @@ for ep in range(N_ep):
     
     
         # Training Loss and Error    
-        tr_info_lst=sorted(glob.glob(out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, "03d")+'*.info'))
+        tr_info_lst=sorted(glob.glob(out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'*.info'))
         [tr_loss,tr_error,tr_time]=compute_avg_performance(tr_info_lst)
         
         tr_loss_tot=tr_loss_tot+tr_loss
@@ -234,15 +235,15 @@ for ep in range(N_ep):
     for valid_data in valid_data_lst:
         
         # Compute the number of chunks for each validation dataset
-        N_ck_valid=compute_n_chunks(out_folder,valid_data,ep,'valid')
-
+        N_ck_valid=compute_n_chunks(out_folder,valid_data,ep,N_ep_str_format,'valid')
+        N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_valid)),1))+'d'
     
         for ck in range(N_ck_valid):
             
             
             # paths of the output files
-            info_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.info'            
-            config_chunk_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.cfg'
+            info_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.info'            
+            config_chunk_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
     
             # Do validation if the chunk was not already processed
             if not(os.path.exists(info_file)):
@@ -267,7 +268,7 @@ for ep in range(N_ep):
             op_counter+=1
         
         # Compute validation performance  
-        valid_info_lst=sorted(glob.glob(out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, "03d")+'*.info'))
+        valid_info_lst=sorted(glob.glob(out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'*.info'))
         [valid_loss,valid_error,valid_time]=compute_avg_performance(valid_info_lst)
         valid_peformance_dict[valid_data]=[valid_loss,valid_error,valid_time]
         tot_time=tot_time+valid_time
@@ -297,7 +298,8 @@ for pt_arch in pt_files.keys():
 for forward_data in forward_data_lst:
            
          # Compute the number of chunks
-         N_ck_forward=compute_n_chunks(out_folder,forward_data,ep,'forward')
+         N_ck_forward=compute_n_chunks(out_folder,forward_data,ep,N_ep_str_format,'forward')
+         N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_forward)),1))+'d'
          
          for ck in range(N_ck_forward):
             
@@ -307,8 +309,8 @@ for forward_data in forward_data_lst:
                 print('Forwarding %s chunk = %i / %i' %(forward_data,ck+1, N_ck_forward))
             
             # output file
-            info_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.info'
-            config_chunk_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.cfg'
+            info_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.info'
+            config_chunk_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
 
             
             # Do forward if the chunk was not already processed

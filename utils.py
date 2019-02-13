@@ -18,7 +18,7 @@ import importlib
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
+import math
 
 
 
@@ -677,6 +677,7 @@ def create_configs(config):
     
     cfg_file_proto_chunk=config['cfg_proto']['cfg_proto_chunk']
     N_ep=int(config['exp']['N_epochs_tr'])
+    N_ep_str_format='0'+str(max(math.ceil(np.log10(N_ep)),1))+'d'
     tr_data_lst=config['data_use']['train_with'].split(',')
     valid_data_lst=config['data_use']['valid_with'].split(',')
     max_seq_length_train=int(config['batches']['max_seq_length_train'])
@@ -718,17 +719,17 @@ def create_configs(config):
         for tr_data in tr_data_lst:
             
             # Compute the total number of chunks for each training epoch
-            N_ck_tr=compute_n_chunks(out_folder,tr_data,ep,'train')
-        
+            N_ck_tr=compute_n_chunks(out_folder,tr_data,ep,N_ep_str_format,'train')
+            N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_tr)),1))+'d'
          
             # ***Epoch training***
             for ck in range(N_ck_tr):
                 
                 # path of the list of features for this chunk
-                lst_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_*.lst'
+                lst_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'_*.lst'
                 
                 # paths of the output files (info,model,chunk_specific cfg file)
-                info_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.info'
+                info_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep,  N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.info'
                 
                 if ep+ck==0:
                     model_files_past={}
@@ -739,7 +740,7 @@ def create_configs(config):
                 for arch in pt_files.keys():
                     model_files[arch]=info_file.replace('.info','_'+arch+'.pkl')
                 
-                config_chunk_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.cfg'
+                config_chunk_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
                 lst_chunk_file.write(config_chunk_file+'\n')
                 
                 # Write chunk-specific cfg file
@@ -747,22 +748,22 @@ def create_configs(config):
                 
                 # update pt_file (used to initialized the DNN for the next chunk)  
                 for pt_arch in pt_files.keys():
-                    pt_files[pt_arch]=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_'+pt_arch+'.pkl'
+                    pt_files[pt_arch]=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'_'+pt_arch+'.pkl'
         
         for valid_data in valid_data_lst:
             
             # Compute the number of chunks for each validation dataset
-            N_ck_valid=compute_n_chunks(out_folder,valid_data,ep,'valid')
-    
+            N_ck_valid=compute_n_chunks(out_folder,valid_data,ep,N_ep_str_format,'valid')
+            N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_valid)),1))+'d'
         
             for ck in range(N_ck_valid):
                 
                 # path of the list of features for this chunk
-                lst_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_*.lst'
+                lst_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'_*.lst'
                 
                 # paths of the output files
-                info_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.info'            
-                config_chunk_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.cfg'
+                info_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.info'            
+                config_chunk_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
                 lst_chunk_file.write(config_chunk_file+'\n')
                 # Write chunk-specific cfg file
                 write_cfg_chunk(cfg_file,config_chunk_file,cfg_file_proto_chunk,model_files,lst_file,info_file,'valid',valid_data,lr,max_seq_length_train_curr,name_data,ep,ck)
@@ -777,16 +778,17 @@ def create_configs(config):
     for forward_data in forward_data_lst:
                
              # Compute the number of chunks
-             N_ck_forward=compute_n_chunks(out_folder,forward_data,ep,'forward')
+             N_ck_forward=compute_n_chunks(out_folder,forward_data,ep,N_ep_str_format,'forward')
+             N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_forward)),1))+'d'
              
              for ck in range(N_ck_forward):
                         
                 # path of the list of features for this chunk
-                lst_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_*.lst'
+                lst_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'_*.lst'
                 
                 # output file
-                info_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.info'
-                config_chunk_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'.cfg'
+                info_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.info'
+                config_chunk_file=out_folder+'/exp_files/forward_'+forward_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
                 lst_chunk_file.write(config_chunk_file+'\n')
                 
                 # Write chunk-specific cfg file
@@ -801,6 +803,7 @@ def create_lists(config):
     out_folder=config['exp']['out_folder']
     seed=int(config['exp']['seed'])
     N_ep=int(config['exp']['N_epochs_tr'])    
+    N_ep_str_format='0'+str(max(math.ceil(np.log10(N_ep)),1))+'d'
     
     # Setting the random seed
     random.seed(seed)
@@ -814,7 +817,8 @@ def create_lists(config):
         [fea_names,list_fea,fea_opts,cws_left,cws_right]=parse_fea_field(config[cfg_item2sec(config,'data_name',dataset)]['fea'])
 
         N_chunks= int(config[sec_data]['N_chunks'])
-        
+        N_ck_str_format='0'+str(max(math.ceil(np.log10(N_chunks)),1))+'d'
+         
         full_list=[]
         
         for i in range(len(fea_names)):
@@ -842,7 +846,7 @@ def create_lists(config):
                         #print(snt.split(',')[i])
                         tr_chunks_fea_split.append(snt.split(',')[i])
                         
-                    output_lst_file=out_folder+'/exp_files/train_'+dataset+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_'+fea_names[i]+'.lst'
+                    output_lst_file=out_folder+'/exp_files/train_'+dataset+'_ep'+format(ep,  N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'_'+fea_names[i]+'.lst'
                     f=open(output_lst_file,'w')
                     tr_chunks_fea_wr=map(lambda x:x+'\n', tr_chunks_fea_split)
                     f.writelines(tr_chunks_fea_wr)
@@ -858,6 +862,7 @@ def create_lists(config):
         [fea_names,list_fea,fea_opts,cws_left,cws_right]=parse_fea_field(config[cfg_item2sec(config,'data_name',dataset)]['fea'])
 
         N_chunks= int(config[sec_data]['N_chunks'])
+        N_ck_str_format='0'+str(max(math.ceil(np.log10(N_chunks)),1))+'d'
         
         full_list=[]
         
@@ -885,7 +890,7 @@ def create_lists(config):
                         #print(snt.split(',')[i])
                         valid_chunks_fea_split.append(snt.split(',')[i])
                         
-                    output_lst_file=out_folder+'/exp_files/valid_'+dataset+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_'+fea_names[i]+'.lst'
+                    output_lst_file=out_folder+'/exp_files/valid_'+dataset+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'_'+fea_names[i]+'.lst'
                     f=open(output_lst_file,'w')
                     valid_chunks_fea_wr=map(lambda x:x+'\n', valid_chunks_fea_split)
                     f.writelines(valid_chunks_fea_wr)
@@ -901,6 +906,7 @@ def create_lists(config):
         [fea_names,list_fea,fea_opts,cws_left,cws_right]=parse_fea_field(config[cfg_item2sec(config,'data_name',dataset)]['fea'])
 
         N_chunks= int(config[sec_data]['N_chunks'])
+        N_ck_str_format='0'+str(max(math.ceil(np.log10(N_chunks)),1))+'d'
         
         full_list=[]
         
@@ -928,7 +934,7 @@ def create_lists(config):
                     #print(snt.split(',')[i])
                     forward_chunks_fea_split.append(snt.split(',')[i])
                     
-                output_lst_file=out_folder+'/exp_files/forward_'+dataset+'_ep'+format(ep, "03d")+'_ck'+format(ck, "02d")+'_'+fea_names[i]+'.lst'
+                output_lst_file=out_folder+'/exp_files/forward_'+dataset+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck,N_ck_str_format)+'_'+fea_names[i]+'.lst'
                 f=open(output_lst_file,'w')
                 forward_chunks_fea_wr=map(lambda x:x+'\n', forward_chunks_fea_split)
                 f.writelines(forward_chunks_fea_wr)
@@ -1103,8 +1109,8 @@ def parse_lab_field(lab):
     return [lab_names,lab_folders,lab_opts]
 
 
-def compute_n_chunks(out_folder,data_list,ep,step):
-    list_ck=sorted(glob.glob(out_folder+'/exp_files/'+step+'_'+data_list+'_ep'+format(ep, "03d")+'*.lst'))
+def compute_n_chunks(out_folder,data_list,ep,N_ep_str_format,step):
+    list_ck=sorted(glob.glob(out_folder+'/exp_files/'+step+'_'+data_list+'_ep'+format(ep, N_ep_str_format)+'*.lst'))
     last_ck=list_ck[-1]
     N_ck=int(re.findall('_ck(.+)_', last_ck)[-1].split('_')[0])+1
     return N_ck
@@ -1869,10 +1875,11 @@ def dump_epoch_results(res_file_path, ep, tr_data_lst, tr_loss_tot, tr_error_tot
     # Default terminal line size is 80 characters, try new dispositions to fit this limit
     #
 
+    N_ep_str_format='0'+str(max(math.ceil(np.log10(N_ep)),1))+'d'
     res_file = open(res_file_path, "a")
-    res_file.write('ep=%s tr=%s loss=%s err=%s ' %(format(ep, "03d"),tr_data_lst,format(tr_loss_tot/len(tr_data_lst), "0.3f"),format(tr_error_tot/len(tr_data_lst), "0.3f")))
+    res_file.write('ep=%s tr=%s loss=%s err=%s ' %(format(ep, N_ep_str_format),tr_data_lst,format(tr_loss_tot/len(tr_data_lst), "0.3f"),format(tr_error_tot/len(tr_data_lst), "0.3f")))
     print(' ')
-    print('----- Summary epoch %s / %s'%(format(ep, "03d"),format(N_ep-1, "03d")))
+    print('----- Summary epoch %s / %s'%(format(ep, N_ep_str_format),format(N_ep-1, N_ep_str_format)))
     print('Training on %s' %(tr_data_lst))
     print('Loss = %s | err = %s '%(format(tr_loss_tot/len(tr_data_lst), "0.3f"),format(tr_error_tot/len(tr_data_lst), "0.3f")))
     print('-----')
@@ -1903,6 +1910,7 @@ def progress(count, total, status=''):
     sys.stdout.write("\n")
   else:
     sys.stdout.write('[%s] %s%s %s\r' % (bar, percents, '%', status))
+    
   sys.stdout.flush()  
 
 
