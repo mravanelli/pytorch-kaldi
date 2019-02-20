@@ -16,7 +16,7 @@ import configparser
 import numpy as np
 from utils import check_cfg,create_lists,create_configs, compute_avg_performance, \
                   read_args_command_line, run_shell,compute_n_chunks, get_all_archs,cfg_item2sec, \
-                  dump_epoch_results, create_curves,change_lr_cfg
+                  dump_epoch_results, create_curves,change_lr_cfg,expand_str_ep
 from shutil import copyfile
 import re
 from distutils.util import strtobool
@@ -87,9 +87,7 @@ run_nn=getattr(module, run_nn_script)
 create_lists(config)
 
 # Writing the config files
-create_configs(config)      
-
-            
+create_configs(config)  
 
 print("- Chunk creation......OK!\n")
 
@@ -103,12 +101,17 @@ res_file.close()
 # Learning rates and architecture-specific optimization parameters
 arch_lst=get_all_archs(config)
 lr={}
+auto_lr_annealing={}
 improvement_threshold={}
 halving_factor={}
 pt_files={}
 
 for arch in arch_lst:
-    lr[arch]=float(config[arch]['arch_lr'])
+    lr[arch]=expand_str_ep(config[arch]['arch_lr'],'float',N_ep,'|','*')
+    if len(config[arch]['arch_lr'].split('|'))>1:
+       auto_lr_annealing[arch]=False
+    else:
+       auto_lr_annealing[arch]=True 
     improvement_threshold[arch]=float(config[arch]['arch_improvement_threshold'])
     halving_factor[arch]=float(config[arch]['arch_halving_factor'])
     pt_files[arch]=config[arch]['arch_pretrain_file']
@@ -175,8 +178,8 @@ for ep in range(N_ep):
             
             config_chunk_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
             
-            # update learning rate
-            change_lr_cfg(config_chunk_file,lr)
+            # update learning rate in the cfg file (if needed)
+            change_lr_cfg(config_chunk_file,lr,ep)
                         
             
             # if this chunk has not already been processed, do training...
@@ -285,8 +288,10 @@ for ep in range(N_ep):
         err_valid_mean_prev=np.mean(np.asarray(list(valid_peformance_dict_prev.values()))[:,1])
         
         for lr_arch in lr.keys():
-            if ((err_valid_mean_prev-err_valid_mean)/err_valid_mean)<improvement_threshold[lr_arch]:
-                lr[lr_arch]=lr[lr_arch]*halving_factor[lr_arch]
+            # If an external lr schedule is not set, use newbob learning rate anealing
+            if ep<N_ep-1 and auto_lr_annealing[lr_arch]:
+                if ((err_valid_mean_prev-err_valid_mean)/err_valid_mean)<improvement_threshold[lr_arch]:
+                    lr[lr_arch][ep+1]=str(float(lr[lr_arch][ep])*halving_factor[lr_arch])
 
 # Training has ended, copy the last .pkl to final_arch.pkl for production
 for pt_arch in pt_files.keys():

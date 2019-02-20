@@ -7,4 +7,4 @@ cnn_use_batchnorm_inp=bool
 cnn_use_laynorm=bool_list
 cnn_use_batchnorm=bool_list
 cnn_act=list_str
-cnn_drop=list_float
+cnn_drop=str_list

@@ -25,7 +25,7 @@ forward_with=list_str
 
 
 [batches]
-batch_size_train=int(1,inf)
+batch_size_train=list_str
 max_seq_length_train=int(20,inf)
 increase_seq_length_train=Bool
 start_seq_len_train=int(20,inf)
@@ -41,7 +41,7 @@ arch_class=str
 arch_pretrain_file=str
 arch_freeze=bool
 arch_seq_model=bool
-arch_lr=float(0,inf)
+arch_lr=list_str
 arch_halving_factor=float(0,inf)
 arch_improvement_threshold=float(0,inf)
 arch_opt={sgd,rmsprop,adam}

@@ -31,7 +31,6 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
     else:
         config = configparser.ConfigParser()
         config.read(cfg_file)
-
     
     # Setting torch seed
     seed=int(config['exp']['seed'])

@@ -1,6 +1,6 @@
 [proto]
 gru_lay=str_list
-gru_drop=float_list(0.0,1.0)
+gru_drop=str_list
 gru_use_laynorm_inp=bool
 gru_use_batchnorm_inp=bool
 gru_use_laynorm=bool_list

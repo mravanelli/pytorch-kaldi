@@ -1,6 +1,6 @@
 [proto]
 lstm_lay=str_list
-lstm_drop=float_list(0.0,1.0)
+lstm_drop=str_list
 lstm_use_laynorm_inp=bool
 lstm_use_batchnorm_inp=bool
 lstm_use_laynorm=bool_list

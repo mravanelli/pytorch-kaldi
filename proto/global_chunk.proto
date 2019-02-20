@@ -20,7 +20,7 @@ lab=str
 
 
 [batches]
-batch_size_train=int(1,inf)
+batch_size_train=int(0,inf)
 max_seq_length_train=int(20,inf)
 batch_size_valid=int(1,inf)
 max_seq_length_valid=int(20,inf)

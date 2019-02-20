@@ -10,4 +10,4 @@ sinc_use_batchnorm_inp=bool
 sinc_use_laynorm=bool_list
 sinc_use_batchnorm=bool_list
 sinc_act=list_str
-sinc_drop=list_float
+sinc_drop=str_list
