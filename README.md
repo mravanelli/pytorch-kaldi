@@ -235,7 +235,7 @@ You can directly compare your results with ours by going [here](https://bitbucke
 ## Librispeech tutorial
 The steps to run PyTorch-Kaldi on the Librispeech dataset are similar to that reported above for TIMIT. The following tutorial is based on the *100h sub-set*, but it can be easily extended to the full dataset (960h).
 
-1. Run the Kaldi recipe for timit (at least until # decode using the tri4b model)
+1. Run the Kaldi recipe for librispeech (at least until # decode using the tri4b model)
 
 2. Compute the fmllr features by running:
 
