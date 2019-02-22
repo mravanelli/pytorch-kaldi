@@ -62,7 +62,7 @@ N_ep_str_format='0'+str(max(math.ceil(np.log10(N_ep)),1))+'d'
 tr_data_lst=config['data_use']['train_with'].split(',')
 valid_data_lst=config['data_use']['valid_with'].split(',')
 forward_data_lst=config['data_use']['forward_with'].split(',')
-max_seq_length_train=int(config['batches']['max_seq_length_train'])
+max_seq_length_train=config['batches']['max_seq_length_train']
 forward_save_files=list(map(strtobool,config['forward']['save_out_file'].split(',')))
 
 

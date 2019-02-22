@@ -693,7 +693,7 @@ python run_exp.py cfg/TIMIT_baselines/TIMIT_MLP_fbank_prod.cfg --dataset4,fea,0,
 This command will internally alter the configuration file with your specified paths, and run and your defined features! Note that passing long arguments to the run_exp.py script requires a specific notation. *--dataset4* specifies the name of the created section, *fea* is the name of the higher level field, *fea_lst* or *lab_graph* are the name of the lowest level field you want to change. The *0* is here to indicate which lowest level field you want to alter, indeed some configuration files may contain multiple *lab_graph* per dataset! Therefore, *0* indicates the first occurrence, *1* the second ... Paths MUST be encapsulated by " " to be interpreted as full strings! Note that you need to alter the *data_name* and *forward_with* fields if you don't want different .wav files transcriptions to erase each other (decoding files are stored accordingly to the field*data_name*). ``` --dataset4,data_name=MyNewName --data_use,forward_with=MyNewName ```.
 
 ## Batch size, learning rate, and dropout scheduler
-In order to give users more flexibility, the latest version of PyTorch-Kaldi supports scheduling of the batch size, learning rate, and dropout factor.
+In order to give users more flexibility, the latest version of PyTorch-Kaldi supports scheduling of the batch size, max_seq_length_train, learning rate, and dropout factor.
 This means that it is now possible to change these values during training. To support this feature, we implemented the following formalisms within the config files:
 ```
 batch_size_train = 128*12 | 64*10 | 32*2

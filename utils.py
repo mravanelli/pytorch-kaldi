@@ -680,7 +680,7 @@ def create_configs(config):
     N_ep_str_format='0'+str(max(math.ceil(np.log10(N_ep)),1))+'d'
     tr_data_lst=config['data_use']['train_with'].split(',')
     valid_data_lst=config['data_use']['valid_with'].split(',')
-    max_seq_length_train=int(config['batches']['max_seq_length_train'])
+    max_seq_length_train=config['batches']['max_seq_length_train']
     forward_data_lst=config['data_use']['forward_with'].split(',')
 
     
@@ -693,9 +693,10 @@ def create_configs(config):
     # Read the batch size string
     batch_size_tr_str=config['batches']['batch_size_train']
     batch_size_tr_arr=expand_str_ep(batch_size_tr_str,'int',N_ep,'|','*')
+    
+    # Read the max_seq_length_train
+    max_seq_length_tr_arr=expand_str_ep(max_seq_length_train,'int',N_ep,'|','*')
 
-    
-    
 
     cfg_file_proto=config['cfg_proto']['cfg_proto']
     [config,name_data,name_arch]=check_cfg(cfg_file,config,cfg_file_proto)
@@ -734,8 +735,7 @@ def create_configs(config):
     
     if strtobool(config['batches']['increase_seq_length_train']):
         max_seq_length_train_curr=int(config['batches']['start_seq_len_train'])
-    else:
-        max_seq_length_train_curr=max_seq_length_train
+
         
     for ep in range(N_ep):
         
@@ -767,6 +767,9 @@ def create_configs(config):
                 config_chunk_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
                 lst_chunk_file.write(config_chunk_file+'\n')
                 
+                if strtobool(config['batches']['increase_seq_length_train'])==False:
+                    max_seq_length_train_curr=int(max_seq_length_tr_arr[ep])
+                    
                 # Write chunk-specific cfg file
                 write_cfg_chunk(cfg_file,config_chunk_file,cfg_file_proto_chunk,pt_files,lst_file,info_file,'train',tr_data,lr,max_seq_length_train_curr,name_data,ep,ck,batch_size_tr_arr[ep],drop_rates)
                 
@@ -795,8 +798,8 @@ def create_configs(config):
         #  if needed, update sentence_length
         if strtobool(config['batches']['increase_seq_length_train']):
             max_seq_length_train_curr=max_seq_length_train_curr*int(config['batches']['multply_factor_seq_len_train'])
-            if max_seq_length_train_curr>max_seq_length_train:
-                max_seq_length_train_curr=max_seq_length_train
+            if max_seq_length_train_curr>int(max_seq_length_tr_arr[ep]):
+                max_seq_length_train_curr=int(max_seq_length_tr_arr[ep])
             
         
     for forward_data in forward_data_lst:

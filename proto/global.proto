@@ -26,7 +26,7 @@ forward_with=list_str
 
 [batches]
 batch_size_train=list_str
-max_seq_length_train=int(20,inf)
+max_seq_length_train=list_str
 increase_seq_length_train=Bool
 start_seq_len_train=int(20,inf)
 multply_factor_seq_len_train=int(0,inf)
