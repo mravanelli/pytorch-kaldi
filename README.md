@@ -769,7 +769,7 @@ In the following table, we compare the result of SincNet with other feed-forward
 In this section, we show how to use PyTorch-Kaldi to jointly train a cascade between a speech enhancement and a speech recognition neural networks. The speech enhancement has the goal of improving the quality of the speech signal by minimizing the MSE between clean and noisy features. The enhanced features then feed another neural network that predicts context-dependent phone states.
 
 In the following, we report a toy-task example based on a reverberated version of TIMIT, that is only intended to show how users should set the config file to train such a combination of neural networks. 
- Even though some implementation details (and the adopted datasets are different), this tutorial is inspired by this paper:
+ Even though some implementation details (and the adopted datasets) are different, this tutorial is inspired by this paper:
 
 - *M. Ravanelli, P. Brakel, M. Omologo, Y. Bengio, "Batch-normalized joint training for DNN-based distant speech recognition", in Proceedings of STL 2016 [arXiv](https://arxiv.org/abs/1703.08471)*
 
@@ -777,7 +777,9 @@ In the following, we report a toy-task example based on a reverberated version o
 To run the system do the following steps:
 
 1- Make sure you have the standard clean version of TIMIT available.
+
 2- Run the *Kaldi s5* baseline of TIMIT. This step is necessary to compute the clean features (that will be the labels of the speech enhancement system) and the alignments (that will be the labels of the speech recognition system). We recommend running the full timit s5 recipe (including the DNN training).
+
 3- The standard TIMIT recipe uses MFCCs features. In this tutorial, instead, we use FBANK features. To compute  FBANK features run the following script in *$KALDI_ROOT/egs/TIMIT/s5* :
 ```    
 feadir=fbank
