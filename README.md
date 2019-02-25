@@ -789,6 +789,8 @@ for x in train dev test; do
   steps/compute_cmvn_stats.sh data/$x exp/make_fbank/$x $feadir
 done
 ```    
+Note that we use 40 FBANKS here, while Kaldi uses by default 23 FBANKs. To compute 40-dimensional features go into "$KALDI_ROOT/egs/TIMIT/conf/fbank.conf" and change the number of considered output filters.
+
 
 4- Go to [this external repository](https://github.com/mravanelli/pySpeechRev/blob/master/README.md) and follow the steps to generate a reverberated version of TIMIT starting from the clean one. Note that this is just a *toy task* that is only helpful to show how setting up a joint-training system.
 
@@ -801,7 +803,8 @@ for x in train dev test; do
   steps/make_fbank.sh --cmd "$train_cmd" --nj $feats_nj data/$x exp/make_fbank/$x $feadir
   steps/compute_cmvn_stats.sh data/$x exp/make_fbank/$x $feadir
 done
-``` 
+```
+Remember to change the $KALDI_ROOT/egs/TIMIT_rev/conf/fbank.conf file in order to compute 40 features rather than the 23 FBANKS of the default configuration.
 
 6- Once features are computed, open the following config file: 
 
