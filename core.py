@@ -244,7 +244,7 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
         
         # Progress bar
         if to_do == 'train':
-          status_string="Training | (Batch "+str(i+1)+"/"+str(N_batches)+")"+" | L:" +str(round(outs_dict['loss_final'].detach().item(),3))
+          status_string="Training | (Batch "+str(i+1)+"/"+str(N_batches)+")"+" | L:" +str(round(loss_sum.cpu().item()/(i+1),3))
           if i==N_batches-1:
              status_string="Training | (Batch "+str(i+1)+"/"+str(N_batches)+")"
 
