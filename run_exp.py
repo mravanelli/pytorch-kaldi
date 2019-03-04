@@ -14,15 +14,14 @@ import sys
 import glob
 import configparser
 import numpy as np
-from utils import check_cfg, create_lists, create_configs, compute_avg_performance, \
-                  read_args_command_line, run_shell, compute_n_chunks, get_all_archs,cfg_item2sec, \
-                  dump_epoch_results, create_curves, change_lr_cfg
+from utils import check_cfg,create_lists,create_configs, compute_avg_performance, \
+                  read_args_command_line, run_shell,compute_n_chunks, get_all_archs,cfg_item2sec, \
+                  dump_epoch_results, create_curves,change_lr_cfg,expand_str_ep
 from shutil import copyfile
 import re
 from distutils.util import strtobool
 import importlib
 import math
-import torch
 
 # Reading global cfg file (first argument-mandatory file) 
 cfg_file=sys.argv[1]
@@ -62,7 +61,7 @@ N_ep_str_format='0'+str(max(math.ceil(np.log10(N_ep)),1))+'d'
 tr_data_lst=config['data_use']['train_with'].split(',')
 valid_data_lst=config['data_use']['valid_with'].split(',')
 forward_data_lst=config['data_use']['forward_with'].split(',')
-max_seq_length_train=int(config['batches']['max_seq_length_train'])
+max_seq_length_train=config['batches']['max_seq_length_train']
 forward_save_files=list(map(strtobool,config['forward']['save_out_file'].split(',')))
 
 
@@ -89,8 +88,6 @@ create_lists(config)
 # Writing the config files
 create_configs(config)      
 
-            
-
 print("- Chunk creation......OK!\n")
 
 # create res_file
@@ -98,17 +95,20 @@ res_file_path=out_folder+'/res.res'
 res_file = open(res_file_path, "a")
 res_file.close()
 
-
-
 # Learning rates and architecture-specific optimization parameters
 arch_lst=get_all_archs(config)
 lr={}
+auto_lr_annealing={}
 improvement_threshold={}
 halving_factor={}
 pt_files={}
 
 for arch in arch_lst:
-    lr[arch]=float(config[arch]['arch_lr'])
+    lr[arch]=expand_str_ep(config[arch]['arch_lr'],'float',N_ep,'|','*')
+    if len(config[arch]['arch_lr'].split('|'))>1:
+       auto_lr_annealing[arch]=False
+    else:
+       auto_lr_annealing[arch]=True 
     improvement_threshold[arch]=float(config[arch]['arch_improvement_threshold'])
     halving_factor[arch]=float(config[arch]['arch_halving_factor'])
     pt_files[arch]=config[arch]['arch_pretrain_file']
@@ -148,7 +148,7 @@ for ep in range(N_ep):
     tr_error_tot=0
     tr_time_tot=0
     
-    print('------------------------------ Epoch %s / %s ------------------------------'%(format(ep, N_ep_str_format),format(N_ep-1, N_ep_str_format))) 
+    print('------------------------------ Epoch %s / %s ------------------------------'%(format(ep, N_ep_str_format),format(N_ep-1, N_ep_str_format)))
 
     for tr_data in tr_data_lst:
         
@@ -174,8 +174,8 @@ for ep in range(N_ep):
             
             config_chunk_file=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
             
-            # update learning rate
-            change_lr_cfg(config_chunk_file,lr)
+            # update learning rate in the cfg file (if needed)
+            change_lr_cfg(config_chunk_file,lr,ep)
             
             # if this chunk has not already been processed, do training...
             if not(os.path.exists(info_file)):
@@ -205,8 +205,7 @@ for ep in range(N_ep):
             for pt_arch in pt_files.keys():
                 pt_files[pt_arch]=out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'_'+pt_arch+'.pkl'
                 
-            # remove previous pkl files
-            # store last n_mdls_store models
+            # remove previous pkl files but store last n_mdls_store models
             if config['exp']['n_mdls_store']:
                 n_mdls_store = int(config['exp']['n_mdls_store'])
             else:
@@ -215,7 +214,7 @@ for ep in range(N_ep):
             if len(model_files_past.keys())>0:
                 for pt_arch in pt_files.keys():
                     if os.path.exists(model_files_past[pt_arch]) and (ep <= N_ep-n_mdls_store or ck != 0):
-                            os.remove(model_files_past[pt_arch]) 
+                        os.remove(model_files_past[pt_arch]) 
     
         # Training Loss and Error   
         tr_info_lst=sorted(glob.glob(out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'*.info'))
@@ -276,7 +275,7 @@ for ep in range(N_ep):
         valid_peformance_dict[valid_data]=[valid_loss,valid_error,valid_time]
         tot_time=tot_time+valid_time
        
-    # do not overwrite res.res file when reruning decoding
+    # Print results in both res_file and stdout, do not overwrite res.res file when reruning decoding
     if not(os.path.exists(out_folder+'/exp_files/final_'+pt_arch+'.pkl')):
         dump_epoch_results(res_file_path, ep, tr_data_lst, tr_loss_tot, tr_error_tot, tot_time, valid_data_lst, valid_peformance_dict, lr, N_ep)
 
@@ -287,8 +286,10 @@ for ep in range(N_ep):
         err_valid_mean_prev=np.mean(np.asarray(list(valid_peformance_dict_prev.values()))[:,1])
         
         for lr_arch in lr.keys():
-            if ((err_valid_mean_prev-err_valid_mean)/err_valid_mean)<improvement_threshold[lr_arch]:
-                lr[lr_arch]=lr[lr_arch]*halving_factor[lr_arch]
+            # If an external lr schedule is not set, use newbob learning rate anealing
+            if ep<N_ep-1 and auto_lr_annealing[lr_arch]:
+                if ((err_valid_mean_prev-err_valid_mean)/err_valid_mean)<improvement_threshold[lr_arch]:
+                    lr[lr_arch][ep+1]=str(float(lr[lr_arch][ep])*halving_factor[lr_arch])
 
 # Training has ended, copy the last .pkl to final_arch.pkl for production
 for pt_arch in pt_files.keys():
