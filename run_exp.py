@@ -291,7 +291,9 @@ for ep in range(N_ep):
             # If an external lr schedule is not set, use newbob learning rate anealing
             if ep<N_ep-1 and auto_lr_annealing[lr_arch]:
                 if ((err_valid_mean_prev-err_valid_mean)/err_valid_mean)<improvement_threshold[lr_arch]:
-                    lr[lr_arch][ep+1]=str(float(lr[lr_arch][ep])*halving_factor[lr_arch])
+                    new_lr_value = float(lr[lr_arch][ep])*halving_factor[lr_arch]
+                    for i in range(ep + 1, N_ep):
+                        lr[lr_arch][i] = str(new_lr_value)
 
 # Training has ended, copy the last .pkl to final_arch.pkl for production
 for pt_arch in pt_files.keys():
@@ -325,7 +327,7 @@ for forward_data in forward_data_lst:
                 
                 # getting the next chunk 
                 next_config_file=cfg_file_list[op_counter]
-                                         
+
                 # run chunk processing                    
                 [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
                 
