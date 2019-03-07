@@ -62,7 +62,7 @@ except:
 scp_file = open(scp_file_out,"w") 
 
 # reading the labels
-lab= { k:v for k,v in read_vec_int_ark('gunzip -c '+lab_folder+'/ali*.gz | '+lab_opts+' '+lab_folder+'/final.mdl ark:- ark:-|')} 
+lab= { k:v for k,v in read_vec_int_ark('gunzip -c '+lab_folder+'/ali*.gz | '+lab_opts+' '+lab_folder+'/final.mdl ark:- ark:-|', out_folder)} 
 
 # reading the list file
 with open(wav_lst) as f:
@@ -107,7 +107,7 @@ for sig_file in sig_lst:
     
     # Save the matrix into a kaldi ark
     out_file=out_folder+'/'+sig_id+'.ark'
-    write_mat(out_file, frame_all, key=sig_id)
+    write_mat(out_folder, out_file, frame_all, key=sig_id)
     print(sig_id)
     scp_file.write(sig_id+' '+out_folder+'/'+sig_id+'.ark:'+str(len(sig_id)+1)+'\n')
 
