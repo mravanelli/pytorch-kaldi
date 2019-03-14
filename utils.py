@@ -311,6 +311,7 @@ def expand_section(config_proto,config):
     name_data=[]
     name_arch=[]
     for sec in config.sections():
+
         if 'dataset' in sec:
 
             config_proto.add_section(sec)
@@ -432,11 +433,10 @@ def check_consistency_with_proto(cfg_file,cfg_file_proto):
     
     # Reading the cfg file
     config.read(cfg_file)
-    
+
     # Reading proto cfg file    
     config_proto = configparser.ConfigParser()
     config_proto.read(cfg_file_proto)
-
 
     
     # Adding the multiple entries in data and architecture sections 
@@ -474,6 +474,7 @@ def check_cfg(cfg_file,config,cfg_file_proto):
     if not(set(data_use_with).issubset(name_data)):
         sys.stderr.write("ERROR: in [data_use] you are using a dataset not specified in [dataset*] %s \n" % (cfg_file))
         sec_parse=False
+        sys.exit(0) 
      
     # Set to false the first layer norm layer if the architecture is sequential (to avoid numerical instabilities)
     seq_model=False
@@ -493,22 +494,36 @@ def check_cfg(cfg_file,config,cfg_file_proto):
 
                     
         
- 
-    
-     
+    # Production case (We don't have the alignement for the forward_with), by default the prod
+    # Flag is set to False, and the dataset prod number to 1, corresponding to no prod dataset
+    config['exp']['production']=str('False')
+    prod_dataset_number="dataset1"
+
+    for data in name_data:
+
+        [lab_names,_,_]=parse_lab_field(config[cfg_item2sec(config,'data_name',data)]['lab'])
+        if "none" in lab_names and data == config['data_use']['forward_with']:
+            config['exp']['production']=str('True')
+            prod_data_name = data
+            for sec in config.sections():
+                if 'dataset' in sec:
+                    if config[sec]['data_name'] == data:
+                        prod_dataset_number = sec
+        else:
+            continue
+
+    # If production case is detected, remove all the other datasets except production
+    if config['exp']['production'] == True:
+        name_data = [elem for elem in name_data if elem == prod_data_name]
+
     # Parse fea and lab  fields in datasets*
     cnt=0
     fea_names_lst=[]
     lab_names_lst=[]
     for data in name_data:
 
-        # Check for production case 'none' lab name
         [lab_names,_,_]=parse_lab_field(config[cfg_item2sec(config,'data_name',data)]['lab'])
-        config['exp']['production']=str('False')
-        if lab_names== ["none"] and data == config['data_use']['forward_with']:
-            config['exp']['production']=str('True')
-            continue
-        elif lab_names == ["none"] and data != config['data_use']['forward_with']:
+        if "none" in lab_names:
             continue
 
         [fea_names,fea_lsts,fea_opts,cws_left,cws_right]=parse_fea_field(config[cfg_item2sec(config,'data_name',data)]['fea'])
@@ -549,8 +564,8 @@ def check_cfg(cfg_file,config,cfg_file_proto):
     forward_norm_lst=config['forward']['normalize_with_counts_from'].split(',')
     forward_norm_bool_lst=config['forward']['normalize_posteriors'].split(',')
 
-    lab_lst=list(re.findall('lab_name=(.*)\n',config['dataset1']['lab'].replace(' ','')))
-    lab_folders=list(re.findall('lab_folder=(.*)\n',config['dataset1']['lab'].replace(' ','')))
+    lab_lst=list(re.findall('lab_name=(.*)\n',config[prod_dataset_number]['lab'].replace(' ','')))
+    lab_folders=list(re.findall('lab_folder=(.*)\n',config[prod_dataset_number]['lab'].replace(' ','')))
     N_out_lab=['none'] * len(lab_lst)
 
     for i in range(len(lab_opts)):
@@ -582,14 +597,14 @@ def check_cfg(cfg_file,config,cfg_file_proto):
 
             if forward_norm_lst[i] not in lab_lst:
                 if not os.path.exists(forward_norm_lst[i]):
-                    sys.stderr.write('ERROR: the count_file \"%s\" in the section \"forward_out\" is does not exist)\n' %(forward_norm_lst[i]))
+                    sys.stderr.write('ERROR: the count_file \"%s\" in the section \"forward_out\" does not exist)\n' %(forward_norm_lst[i]))
                     sys.exit(0)
                 else:
                     # Check if the specified file is in the right format
                     f = open(forward_norm_lst[i],"r")
                     cnts = f.read()
                     if not(bool(re.match("(.*)\[(.*)\]", cnts))):
-                        sys.stderr.write('ERROR: the count_file \"%s\" in the section \"forward_out\" is not in the right format)\n' %(forward_norm_lst[i]))
+                        sys.stderr.write('ERROR: the count_file \"%s\" in the section \"forward_out\" not in the right format)\n' %(forward_norm_lst[i]))
                         
                     
             else:
@@ -626,7 +641,7 @@ def check_cfg(cfg_file,config,cfg_file_proto):
         for field in list(config[sec]):
             for i in range(len(lab_lst)):
                 pattern='N_out_'+lab_lst[i]
-            
+
                 if pattern in config[sec][field]:
                     if N_out_lab[i]!='none':
                         config[sec][field]=config[sec][field].replace(pattern,str(N_out_lab[i]))
@@ -682,6 +697,7 @@ def create_configs(config):
     valid_data_lst=config['data_use']['valid_with'].split(',')
     max_seq_length_train=config['batches']['max_seq_length_train']
     forward_data_lst=config['data_use']['forward_with'].split(',')
+    is_production = strtobool(config['exp']['production'])
 
     
     out_folder=config['exp']['out_folder']
@@ -699,8 +715,8 @@ def create_configs(config):
 
 
     cfg_file_proto=config['cfg_proto']['cfg_proto']
+
     [config,name_data,name_arch]=check_cfg(cfg_file,config,cfg_file_proto)
-    
 
     arch_lst=get_all_archs(config)
     lr={}
@@ -730,16 +746,23 @@ def create_configs(config):
                     if float(dropout_factor)<0.0 or float(dropout_factor)>1.0:
                         sys.stderr.write('The dropout rate should be between 0 and 1. Got %s in %s.\n' %(dropout_factor,field_key))
                         sys.exit(0)
-       
+
+    # Production case, we don't want to train, only forward without labels
+    if is_production:
+        ep           = N_ep-1
+        N_ep         = 0
+        model_files  = {}
+        max_seq_length_train_curr = max_seq_length_train
+
+        for arch in pt_files.keys():
+            model_files[arch] = out_folder+'/exp_files/final_'+arch+'.pkl'
         
     
     if strtobool(config['batches']['increase_seq_length_train']):
         max_seq_length_train_curr=int(config['batches']['start_seq_len_train'])
 
-        
     for ep in range(N_ep):
         
-    
         for tr_data in tr_data_lst:
             
             # Compute the total number of chunks for each training epoch
@@ -1029,10 +1052,13 @@ def write_cfg_chunk(cfg_file,config_chunk_file,cfg_file_proto_chunk,pt_files,lst
     config_chunk.remove_section('decoding')
     config_chunk.remove_section('data_use')
     
-    
-    for dataset in name_data:
+    data_to_del = []
+    for sec in config.sections():
+        if 'dataset' in sec:
+            data_to_del.append(config[sec]['data_name'])
+
+    for dataset in data_to_del:
         config_chunk.remove_section(cfg_item2sec(config_chunk,'data_name',dataset))
-    
     
     # Create batche section
     config_chunk.remove_option('batches','increase_seq_length_train')
