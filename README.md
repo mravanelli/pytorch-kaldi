@@ -127,7 +127,15 @@ In the following, we provide a short tutorial of the PyTorch-Kaldi toolkit based
 
 2. Make sure Kaldi and PyTorch installations are fine. Make also sure that your KALDI paths are currently working (you should add the Kaldi paths into the .bashrc as reported in the section "Prerequisites"). For instance, type "copy-feats" and "hmm-info" and make sure no errors appear. 
 
-3. Run the Kaldi s5 baseline of TIMIT. This step is necessary to compute features and labels later used to train the PyTorch neural network. We recommend running the full timit s5 recipe (including the DNN training). This way all the necessary files are created and the user can directly compare the results obtained by Kaldi with that achieved with our toolkit.
+3. Run the Kaldi s5 baseline of TIMIT. This step is necessary to compute features and labels later used to train the PyTorch neural network. We recommend running the full timit s5 recipe (including the DNN training): 
+
+```
+cd kaldi/egs/timit/s5
+./run.sh
+./local/nnet/run_dnn.sh
+```
+
+This way all the necessary files are created and the user can directly compare the results obtained by Kaldi with that achieved with our toolkit.
 
 4. Compute the alignments (i.e, the phone-state labels) for test and dev data with the following commands (go into $KALDI_ROOT/egs/timit/s5). If you want to use tri3 alignments, type:
 ```
