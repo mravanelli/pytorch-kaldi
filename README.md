@@ -670,8 +670,7 @@ Moreover, you can take a look into our utility called save_raw_fea.py. This scri
 ## How can I transcript my own audio files
 The current version of Pytorch-Kaldi supports the standard production process of using a Pytorch-Kaldi pre-trained acoustic model to transcript one or multiples .wav files. It is important to understand that you must have a trained Pytorch-Kaldi model. While you don't need labels or alignments anymore, Pytorch-Kaldi still needs many files to transcript a new audio file:
 1. The features and features list *feats.scp* (with .ark files, see #how-can-i-plug-my-own-features)
-2. The decoding graph (usually created with mkgraph.sh during previous model training such as triphones models)
-3. The *final.mdl* file that has been used to create the acoustic features (only for decoding, not mandatory if you have your custom decoding script)
+2. The decoding graph (usually created with mkgraph.sh during previous model training such as triphones models). This graph is not needed if you're not decoding.
 
 Once you have all these files, you can start adding your dataset section to the global configuration file. The easiest way is to copy the *cfg* file used to train your acoustic model and just modify by adding a new *[dataset]*:
 ```
@@ -693,7 +692,30 @@ train_with = TIMIT_tr
 valid_with = TIMIT_dev
 forward_with = myWavFile
 ```
-The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip this information to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more than the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk). Also, all the call to *N_out_lab_name* must be replaced by *N_out_none* In a production scenario, you might need to transcript a huge number of audio files, and you don't want to create as much as needed .cfg file. In this extent, and after creating this initial production .cfg file (you can leave the path blank), you can call the run_exp.py script with specific arguments referring to your different.wav features:
+The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip this information to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more than the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk). 
+** WARNINGS **
+In your standard .cfg, you might have use many keywords such as *N_out_lab_cd* that are not usable anymore. Indeed, in a production scenario, you don't want to have the training data on your machine. Therefore, all the *variable* that were on your .cfg file must be replaced by their true values. To replace all the *N_out_{mono,lab_cd}* you can take a look at the output of:
+```
+hmm-info /path/to/the/final.mdl/used/to/generate/the/training/ali
+```
+Then, if you normalize posteriors as (check in your .cfg Section forward):
+```
+normalize_posteriors = True
+normalize_with_counts_from = lab_cd
+```
+You must replace *lab_cd* by:
+```
+normalize_posteriors = True
+normalize_with_counts_from = /path/to/ali_train_pdf.counts
+```
+This normalization step is crucial for HMM-DNN speech recognition. DNNs, in fact, provide posterior probabilities, while HMMs are generative models that work with likelihoods. To derive the required likelihoods, one can simply divide the posteriors by the prior probabilities. To create this *ali_train_pdf.counts* file you can follow:
+```
+alidir=/path/to/the/exp/tri_ali (change it with your path to the exp with the ali)
+num_pdf=$(hmm-info $alidir/final.mdl | awk '/pdfs/{print $4}')
+labels_tr_pdf="ark:ali-to-pdf $alidir/final.mdl \"ark:gunzip -c $alidir/ali.*.gz |\" ark:- |"
+analyze-counts --verbose=1 --binary=false --counts-dim=$num_pdf "$labels_tr_pdf" ali_train_pdf.counts
+```
+et voilà ! In a production scenario, you might need to transcript a huge number of audio files, and you don't want to create as much as needed .cfg file. In this extent, and after creating this initial production .cfg file (you can leave the path blank), you can call the run_exp.py script with specific arguments referring to your different.wav features:
 ```
 python run_exp.py cfg/TIMIT_baselines/TIMIT_MLP_fbank_prod.cfg --dataset4,fea,0,fea_lst="myWavFilePath/data/feats.scp" --dataset4,lab,0,lab_data_folder="myWavFilePath/data/" --dataset4,lab,0,lab_graph="myWavFilePath/exp/tri3/graph/"
 ```

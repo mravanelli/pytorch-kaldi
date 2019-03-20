@@ -513,7 +513,7 @@ def check_cfg(cfg_file,config,cfg_file_proto):
             continue
 
     # If production case is detected, remove all the other datasets except production
-    if config['exp']['production'] == True:
+    if config['exp']['production'] == str('True'):
         name_data = [elem for elem in name_data if elem == prod_data_name]
 
     # Parse fea and lab  fields in datasets*
@@ -528,7 +528,7 @@ def check_cfg(cfg_file,config,cfg_file_proto):
 
         [fea_names,fea_lsts,fea_opts,cws_left,cws_right]=parse_fea_field(config[cfg_item2sec(config,'data_name',data)]['fea'])
         [lab_names,lab_folders,lab_opts]=parse_lab_field(config[cfg_item2sec(config,'data_name',data)]['lab'])
-        
+
         fea_names_lst.append(sorted(fea_names))
         lab_names_lst.append(sorted(lab_names))
         
@@ -568,69 +568,70 @@ def check_cfg(cfg_file,config,cfg_file_proto):
     lab_folders=list(re.findall('lab_folder=(.*)\n',config[prod_dataset_number]['lab'].replace(' ','')))
     N_out_lab=['none'] * len(lab_lst)
 
-    for i in range(len(lab_opts)):
-        
-        # Compute number of monophones if needed
-        if "ali-to-phones" in lab_opts[i]:
+    if config['exp']['production'] == str('False'):
+        for i in range(len(lab_opts)):
+            
+            # Compute number of monophones if needed
+            if "ali-to-phones" in lab_opts[i]:
 
-            log_file=config['exp']['out_folder']+'/log.log'
-            folder_lab_count=lab_folders[i]
-            cmd="hmm-info "+folder_lab_count+"/final.mdl | awk '/phones/{print $4}'"
-            output=run_shell(cmd,log_file)
-            if output.decode().rstrip()=='':
-                sys.stderr.write("ERROR: hmm-info command doesn't exist. Make sure your .bashrc contains the Kaldi paths and correctly exports it.\n")
+                log_file=config['exp']['out_folder']+'/log.log'
+                folder_lab_count=lab_folders[i]
+                cmd="hmm-info "+folder_lab_count+"/final.mdl | awk '/phones/{print $4}'"
+                output=run_shell(cmd,log_file)
+                if output.decode().rstrip()=='':
+                    sys.stderr.write("ERROR: hmm-info command doesn't exist. Make sure your .bashrc contains the Kaldi paths and correctly exports it.\n")
+                    sys.exit(0)
+        
+                N_out=int(output.decode().rstrip())
+                N_out_lab[i]=N_out
+
+
+        
+    
+        for i in range(len(forward_out_lst)):
+
+            if forward_out_lst[i] not in possible_outs:
+                sys.stderr.write('ERROR: the output \"%s\" in the section \"forward_out\" is not defined in section model)\n' %(forward_out_lst[i]))
                 sys.exit(0)
-    
-            N_out=int(output.decode().rstrip())
-            N_out_lab[i]=N_out
 
+            if strtobool(forward_norm_bool_lst[i]):
 
-        
-    
-    for i in range(len(forward_out_lst)):
-
-        if forward_out_lst[i] not in possible_outs:
-            sys.stderr.write('ERROR: the output \"%s\" in the section \"forward_out\" is not defined in section model)\n' %(forward_out_lst[i]))
-            sys.exit(0)
-
-        if strtobool(forward_norm_bool_lst[i]):
-
-            if forward_norm_lst[i] not in lab_lst:
-                if not os.path.exists(forward_norm_lst[i]):
-                    sys.stderr.write('ERROR: the count_file \"%s\" in the section \"forward_out\" does not exist)\n' %(forward_norm_lst[i]))
-                    sys.exit(0)
-                else:
-                    # Check if the specified file is in the right format
-                    f = open(forward_norm_lst[i],"r")
-                    cnts = f.read()
-                    if not(bool(re.match("(.*)\[(.*)\]", cnts))):
-                        sys.stderr.write('ERROR: the count_file \"%s\" in the section \"forward_out\" not in the right format)\n' %(forward_norm_lst[i]))
-                        
-                    
-            else:
-                # Try to automatically retrieve the count file from the config file
-    
-                    
-                # Compute the number of context-dependent phone states    
-                if "ali-to-pdf" in lab_opts[lab_lst.index(forward_norm_lst[i])]:
-                    log_file=config['exp']['out_folder']+'/log.log'
-                    folder_lab_count=lab_folders[lab_lst.index(forward_norm_lst[i])]
-                    cmd="hmm-info "+folder_lab_count+"/final.mdl | awk '/pdfs/{print $4}'"
-                    output=run_shell(cmd,log_file)
-                    if output.decode().rstrip()=='':
-                        sys.stderr.write("ERROR: hmm-info command doesn't exist. Make sure your .bashrc contains the Kaldi paths and correctly exports it.\n")
+                if forward_norm_lst[i] not in lab_lst:
+                    if not os.path.exists(forward_norm_lst[i]):
+                        sys.stderr.write('ERROR: the count_file \"%s\" in the section \"forward_out\" does not exist)\n' %(forward_norm_lst[i]))
                         sys.exit(0)
-
-                    N_out=int(output.decode().rstrip())
-                    N_out_lab[lab_lst.index(forward_norm_lst[i])]=N_out
-                    count_file_path=out_folder+'/exp_files/forward_'+forward_out_lst[i]+'_'+forward_norm_lst[i]+'.count'
-                    cmd="analyze-counts --print-args=False --verbose=0 --binary=false --counts-dim="+str(N_out)+" \"ark:ali-to-pdf "+folder_lab_count+"/final.mdl \\\"ark:gunzip -c "+folder_lab_count+"/ali.*.gz |\\\" ark:- |\" "+ count_file_path
-                    run_shell(cmd,log_file)
-                    forward_norm_lst[i]=count_file_path
-
+                    else:
+                        # Check if the specified file is in the right format
+                        f = open(forward_norm_lst[i],"r")
+                        cnts = f.read()
+                        if not(bool(re.match("(.*)\[(.*)\]", cnts))):
+                            sys.stderr.write('ERROR: the count_file \"%s\" in the section \"forward_out\" not in the right format)\n' %(forward_norm_lst[i]))
+                            
+                        
                 else:
-                    sys.stderr.write('ERROR: Not able to automatically retrieve count file for the label \"%s\". Please add a valid count file path in \"normalize_with_counts_from\" or set normalize_posteriors=False \n' %(forward_norm_lst[i]))
-                    sys.exit(0)
+                    # Try to automatically retrieve the count file from the config file
+        
+                        
+                    # Compute the number of context-dependent phone states    
+                    if "ali-to-pdf" in lab_opts[lab_lst.index(forward_norm_lst[i])]:
+                        log_file=config['exp']['out_folder']+'/log.log'
+                        folder_lab_count=lab_folders[lab_lst.index(forward_norm_lst[i])]
+                        cmd="hmm-info "+folder_lab_count+"/final.mdl | awk '/pdfs/{print $4}'"
+                        output=run_shell(cmd,log_file)
+                        if output.decode().rstrip()=='':
+                            sys.stderr.write("ERROR: hmm-info command doesn't exist. Make sure your .bashrc contains the Kaldi paths and correctly exports it.\n")
+                            sys.exit(0)
+
+                        N_out=int(output.decode().rstrip())
+                        N_out_lab[lab_lst.index(forward_norm_lst[i])]=N_out
+                        count_file_path=out_folder+'/exp_files/forward_'+forward_out_lst[i]+'_'+forward_norm_lst[i]+'.count'
+                        cmd="analyze-counts --print-args=False --verbose=0 --binary=false --counts-dim="+str(N_out)+" \"ark:ali-to-pdf "+folder_lab_count+"/final.mdl \\\"ark:gunzip -c "+folder_lab_count+"/ali.*.gz |\\\" ark:- |\" "+ count_file_path
+                        run_shell(cmd,log_file)
+                        forward_norm_lst[i]=count_file_path
+
+                    else:
+                        sys.stderr.write('ERROR: Not able to automatically retrieve count file for the label \"%s\". Please add a valid count file path in \"normalize_with_counts_from\" or set normalize_posteriors=False \n' %(forward_norm_lst[i]))
+                        sys.exit(0)
                     
     # Update the config file with the count_file paths
     config['forward']['normalize_with_counts_from']=",".join(forward_norm_lst)
