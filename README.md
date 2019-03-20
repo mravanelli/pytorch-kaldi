@@ -692,9 +692,9 @@ train_with = TIMIT_tr
 valid_with = TIMIT_dev
 forward_with = myWavFile
 ```
-The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip this information to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more than the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk). 
-**WARNINGS**
-In your standard .cfg, you might have use many keywords such as *N_out_lab_cd* that are not usable anymore. Indeed, in a production scenario, you don't want to have the training data on your machine. Therefore, all the *variable* that were on your .cfg file must be replaced by their true values. To replace all the *N_out_{mono,lab_cd}* you can take a look at the output of:
+The key string for your audio file transcription is *lab_name=none*. The *none* tag asks Pytorch-Kaldi to enter a *production* mode that only does the forward propagation and decoding without any labels. You don't need TIMIT_tr and TIMIT_dev to be on your production server since Pytorch-Kaldi will skip this information to directly go to the forward phase of the dataset given in the *forward_with* field. As you can see, the global *fea* field requires the exact same parameters than standard training or testing dataset, while the *lab* field only requires two parameters. Please, note that *lab_data_folder* is nothing more than the same path as *fea_lst*. Finally, you still need to specify the number of chunks you want to create to process this file (1 hour = 1 chunk).<br /> 
+**WARNINGS** <br />
+In your standard .cfg, you might have used keywords such as *N_out_lab_cd* that can not be used anymore. Indeed, in a production scenario, you don't want to have the training data on your machine. Therefore, all the *variables* that were on your .cfg file must be replaced by their true values. To replace all the *N_out_{mono,lab_cd}* you can take a look at the output of:
 ```
 hmm-info /path/to/the/final.mdl/used/to/generate/the/training/ali
 ```
