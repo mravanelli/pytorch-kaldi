@@ -78,7 +78,7 @@ PATH=$PATH:$KALDI_ROOT/src/bin
 PATH=$PATH:$KALDI_ROOT//src/nnetbin
 export PATH
 ```
-As a first test to check the installation, open a bash shell, type "copy-feats" or "hmm-info" and make sure no errors appear.
+Remember to change the KALDI_ROOT variable using your path. As a first test to check the installation, open a bash shell, type "copy-feats" or "hmm-info" and make sure no errors appear.
 
 2. If not already done, install PyTorch (http://pytorch.org/). We tested our codes on PyTorch 1.0 and PyTorch 0.4. An older version of PyTorch is likely to raise errors. To check your installation, type “python” and, once entered into the console, type “import torch”, and make sure no errors appear.
 
