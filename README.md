@@ -243,9 +243,9 @@ You can directly compare your results with ours by going [here](https://bitbucke
 ## Librispeech tutorial
 The steps to run PyTorch-Kaldi on the Librispeech dataset are similar to that reported above for TIMIT. The following tutorial is based on the *100h sub-set*, but it can be easily extended to the full dataset (960h).
 
-1. Run the Kaldi recipe for librispeech at least until "# decode using the tri4b model" (included)
+1. Run the Kaldi recipe for librispeech at least until Stage 13 (included)
 
-2. Compute the fmllr features by running:
+2. Compute the fmllr features by running the following script. But first copy exp/tri4b/trans.* files into exp/tri4b/decode_tgsmall_train_clean_100/ before running the below script with chunk=train_clean_100
 
 ```
 . ./cmd.sh ## You'll want to change cmd.sh to something that will work on your system.
@@ -267,6 +267,7 @@ compute-cmvn-stats --spk2utt=ark:data/$chunk/spk2utt scp:fmllr/$chunk/feats.scp 
 3. compute aligmenents using:
 ```
 # aligments on dev_clean and test_clean
+steps/align_fmllr.sh --nj 30 data/train_clean_100 data/lang exp/tri4b exp/tri4b_ali_clean_100
 steps/align_fmllr.sh --nj 10 data/dev_clean data/lang exp/tri4b exp/tri4b_ali_dev_clean_100
 steps/align_fmllr.sh --nj 10 data/test_clean data/lang exp/tri4b exp/tri4b_ali_test_clean_100
 ```
