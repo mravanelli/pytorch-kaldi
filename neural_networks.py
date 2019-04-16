@@ -155,10 +155,10 @@ class LSTM_cudnn(nn.Module):
         self.input_dim=inp_dim
         self.hidden_size=int(options['hidden_size'])
         self.num_layers=int(options['num_layers'])
-        self.bias=strtobool(options['bias'])
-        self.batch_first=strtobool(options['batch_first'])
+        self.bias=bool(strtobool(options['bias']))
+        self.batch_first=bool(strtobool(options['batch_first']))
         self.dropout=float(options['dropout'])
-        self.bidirectional=strtobool(options['bidirectional'])
+        self.bidirectional=bool(strtobool(options['bidirectional']))
         
         self.lstm = nn.ModuleList([nn.LSTM(self.input_dim, self.hidden_size, self.num_layers, 
                             bias=self.bias,dropout=self.dropout,bidirectional=self.bidirectional)])
@@ -179,7 +179,6 @@ class LSTM_cudnn(nn.Module):
             h0=h0.cuda()
             c0=c0.cuda()
             
-            
         output, (hn, cn) = self.lstm[0](x, (h0, c0))
         
         
@@ -194,10 +193,10 @@ class GRU_cudnn(nn.Module):
         self.input_dim=inp_dim
         self.hidden_size=int(options['hidden_size'])
         self.num_layers=int(options['num_layers'])
-        self.bias=strtobool(options['bias'])
-        self.batch_first=strtobool(options['batch_first'])
+        self.bias=bool(strtobool(options['bias']))
+        self.batch_first=bool(strtobool(options['batch_first']))
         self.dropout=float(options['dropout'])
-        self.bidirectional=strtobool(options['bidirectional'])
+        self.bidirectional=bool(strtobool(options['bidirectional']))
         
         self.gru = nn.ModuleList([nn.GRU(self.input_dim, self.hidden_size, self.num_layers, 
                             bias=self.bias,dropout=self.dropout,bidirectional=self.bidirectional)])
@@ -230,10 +229,10 @@ class RNN_cudnn(nn.Module):
         self.hidden_size=int(options['hidden_size'])
         self.num_layers=int(options['num_layers'])
         self.nonlinearity=options['nonlinearity']
-        self.bias=strtobool(options['bias'])
-        self.batch_first=strtobool(options['batch_first'])
+        self.bias=bool(strtobool(options['bias']))
+        self.batch_first=bool(strtobool(options['batch_first']))
         self.dropout=float(options['dropout'])
-        self.bidirectional=strtobool(options['bidirectional'])
+        self.bidirectional=bool(strtobool(options['bidirectional']))
         
         self.rnn = nn.ModuleList([nn.RNN(self.input_dim, self.hidden_size, self.num_layers, 
                             nonlinearity=self.nonlinearity,bias=self.bias,dropout=self.dropout,bidirectional=self.bidirectional)])
