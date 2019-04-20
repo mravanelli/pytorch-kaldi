@@ -1,0 +1,16 @@
+[proto]
+sru_hidden_size=int
+sru_num_layers=int
+sru_dropout=float(0,1)
+sru_rnn_dropout=float(0,1)
+sru_use_tanh=bool
+sru_use_relu=bool
+sru_use_selu=bool
+sru_weight_norm=bool
+sru_layer_norm=bool
+sru_bidirectional=bool
+sru_is_input_normalized=bool
+sru_has_skip_term=bool
+sru_rescale=bool
+sru_highway_bias=float(-inf,0)
+sru_n_proj=int
