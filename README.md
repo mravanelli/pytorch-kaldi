@@ -239,6 +239,13 @@ Results show that, as expected, fMLLR features outperform MFCCs and FBANKs coeff
 
 The best results are actually obtained with a more complex architecture that combines MFCC, FBANK, and fMLLR features (see *cfg/TIMI_baselines/TIMIT_mfcc_fbank_fmllr_liGRU_best.cfg*). To the best of our knowledge, the **PER=13.8\%** achieved by the latter system yields the best-published performance on the TIMIT test-set. 
 
+The Simple Recurrent Units (SRU) is an efficient and highly parallelizable recurrent model. Its performance on ASR is worse than standard LSTM, GRU, and Li-GRU models, but it is significantly faster. SRU is implemented [here](https://github.com/taolei87/sru) and described in the following paper:
+
+T. Lei, Y. Zhang, S. I. Wang, H. Dai, Y. Artzi, "Simple Recurrent Units for Highly Parallelizable Recurrence, Proc. of EMNLP 2018. [arXiv](https://arxiv.org/pdf/1709.02755.pdf)
+
+To do experiments with this model, use the config file *cfg/TIMIT_baselines/TIMIT_SRU_fbank.cfg*. Before you should install the model using ```pip install sru``` and you should uncomment "import sru" in *neural_networks.py*.
+
+
 You can directly compare your results with ours by going [here](https://bitbucket.org/mravanelli/pytorch-kaldi-exp-timit/src/master/). In this external repository, you can find all the folders containing the generated files.
 
 ## Librispeech tutorial
