@@ -4,4 +4,3 @@ __pycache__
 
 # Ignore user-generated exp directories
 exp
-.DS_Store

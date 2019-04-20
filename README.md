@@ -25,30 +25,30 @@ To improve transparency and replicability of speech recognition results, we give
 
 
 ## Table of Contents
-- [The PyTorch-Kaldi Speech Recognition Toolkit](#the-pytorch-kaldi-speech-recognition-toolkit)
-  - [Table of Contents](#table-of-contents)
-  - [Introduction](#introduction)
-  - [Prerequisites](#prerequisites)
-  - [Recent updates](#recent-updates)
-  - [How to install](#how-to-install)
-  - [TIMIT tutorial](#timit-tutorial)
-  - [Librispeech tutorial](#librispeech-tutorial)
-  - [Overview of the toolkit architecture](#overview-of-the-toolkit-architecture)
-  - [Description of the configuration files:](#description-of-the-configuration-files)
-  - [[FAQs]](#faqs)
-  - [How can I plug-in my model](#how-can-i-plug-in-my-model)
-  - [How can I tune the hyperparameters](#how-can-i-tune-the-hyperparameters)
-  - [How can I use my own dataset](#how-can-i-use-my-own-dataset)
-  - [How can I plug-in my own features](#how-can-i-plug-in-my-own-features)
-  - [How can I transcript my own audio files](#how-can-i-transcript-my-own-audio-files)
-  - [Batch size, learning rate, and dropout scheduler](#batch-size-learning-rate-and-dropout-scheduler)
-  - [How can I contribute to the project](#how-can-i-contribute-to-the-project)
-  - [[EXTRA]](#extra)
-  - [Speech recognition from the raw waveform with SincNet](#speech-recognition-from-the-raw-waveform-with-sincnet)
-  - [Joint training between speech enhancement and ASR](#joint-training-between-speech-enhancement-and-asr)
-  - [Distant Speech Recognition with DIRHA](#distant-speech-recognition-with-dirha)
-  - [Training an autoencoder](#training-an-autoencoder)
-  - [References](#references)
+* [Introduction](#introduction)
+* [Prerequisites](#prerequisites)
+* [How to install](#how-to-install)
+* [Recent Updates](#recent-updates)
+* [Tutorials:](#timit-tutorial)
+  * [TIMIT tutorial](#timit-tutorial)
+  * [Librispeech tutorial](#librispeech-tutorial)
+* [Toolkit Overview:](#overview-of-the-toolkit-architecture)
+  * [Toolkit architecture](#overview-of-the-toolkit-architecture)
+  * [Configuration files](#description-of-the-configuration-files)
+* [FAQs:](#how-can-i-plug-in-my-model)
+  * [How can I plug-in my model?](#how-can-i-plug-in-my-model)
+  * [How can I tune the hyperparameters?](#how-can-i-tune-the-hyperparameters)
+  * [How can I use my own dataset?](#how-can-i-use-my-own-dataset)
+  * [How can I plug-in my own features?](#how-can-i-plug-in-my-own-features)
+  * [How can I transcript my own audio files?](#how-can-i-transcript-my-own-audio-files)
+  * [Batch size, learning rate, and droput scheduler](#Batch-size,-learning-rate,-and-dropout-scheduler)
+  * [How can I contribute to the project?](#how-can-i-contribute-to-the-project)
+* [EXTRA:](#speech-recognition-from-the-raw-waveform-with-sincnet)  
+  * [Speech recognition from the raw waveform with SincNet](#speech-recognition-from-the-raw-waveform-with-sincnet)
+  * [Joint training between speech enhancement and ASR](#joint-training-between-speech-enhancement-and-asr)
+  * [Distant Speech Recognition with DIRHA](#distant-speech-recognition-with-dirha)
+  * [Training an autoencoder](#training-an-autoencoder)
+* [References](#references)
 
 
 ## Introduction
@@ -230,10 +230,9 @@ There are some examples with recurrent (TIMIT_RNN*,TIMIT_LSTM*,TIMIT_GRU*,TIMIT_
 |  Kaldi DNN Baseline | -----| ------| 18.5 |
 |  MLP  | 18.2 | 18.7 | 16.7 | 
 |  RNN  | 17.7 | 17.2 | 15.9 | 
-|  SRU  | -----| 16.6 | -----|
-|  LSTM | 15.1 | 14.3 | 14.5 | 
-|  GRU  | 16.0 | 15.2 | 14.9 | 
-| li-GRU| **15.5** | **14.9**|  **14.2** | 
+|LSTM| 15.1  | 14.3  |14.5  | 
+|GRU| 16.0 | 15.2|  14.9 | 
+|li-GRU| **15.5**  | **14.9**|  **14.2** | 
 
 Results show that, as expected, fMLLR features outperform MFCCs and FBANKs coefficients, thanks to the speaker adaptation process. Recurrent models significantly outperform the standard MLP one, especially when using LSTM, GRU, and Li-GRU architecture, that effectively address gradient vanishing through multiplicative gates. The best result *PER=$14.2$\%* is obtained with the [Li-GRU model](https://arxiv.org/pdf/1803.10225.pdf) [2,3], that is based on a single gate and thus saves 33% of the computations over a standard GRU. 
 
