@@ -230,6 +230,7 @@ There are some examples with recurrent (TIMIT_RNN*,TIMIT_LSTM*,TIMIT_GRU*,TIMIT_
 |  Kaldi DNN Baseline | -----| ------| 18.5 |
 |  MLP  | 18.2 | 18.7 | 16.7 | 
 |  RNN  | 17.7 | 17.2 | 15.9 | 
+|  SRU  | -----| 16.6 | -----|
 |LSTM| 15.1  | 14.3  |14.5  | 
 |GRU| 16.0 | 15.2|  14.9 | 
 |li-GRU| **15.5**  | **14.9**|  **14.2** | 
