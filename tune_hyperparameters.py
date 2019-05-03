@@ -53,15 +53,15 @@ if __name__ == '__main__':
                     if key == key_hyper:
 
                         if "randint" in hyperparam:
-                            [lower, higher] = re.search('randint\((.+?)\)',
-                                                        hyperparam).group(1).split(
+                            lower, higher = re.search('randint\((.+?)\)',
+                                                      hyperparam).group(1).split(
                                 ',')
                             value_hyper = randint(int(lower), int(higher))
                             hyper_found = True
 
                         if "randfloat" in hyperparam:
-                            [lower, higher] = re.search('randfloat\((.+?)\)',
-                                                        hyperparam).group(1).split(
+                            lower, higher = re.search('randfloat\((.+?)\)',
+                                                      hyperparam).group(1).split(
                                 ',')
                             value_hyper = random.uniform(float(lower),
                                                          float(higher))
