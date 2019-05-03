@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##########################################################
 # pytorch-kaldi v.0.1                                      
 # Mirco Ravanelli, Titouan Parcollet
