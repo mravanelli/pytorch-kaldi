@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##########################################################
 # pytorch-kaldi v.0.1                                      
 # Mirco Ravanelli, Titouan Parcollet
@@ -11,83 +12,84 @@
 ##########################################################
 
 
-from random import randint
 import random
 import re
-from optparse import OptionParser
 import os
+import sys
+from random import randint
 
-parser=OptionParser()
-(options,args)=parser.parse_args()
-cfg_file=args[0]
-output_folder=args[1]
-N_exp=int(args[2])
-hyperparam_list=args[3:]
-seed=1234
+if __name__ == '__main__':
+    cfg_file = sys.argv[1]
+    output_folder = sys.argv[2]
+    N_exp = int(sys.argv[3])
+    hyperparam_list = sys.argv[4:]
+    seed = 1234
 
-print('Generating config file for hyperparameter tuning...')
+    print('Generating config file for hyperparameter tuning...')
 
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
-    
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
 
-random.seed(seed)
+    random.seed(seed)
 
-for i in range(N_exp):
-    
-    cfg_file_out=output_folder+'/exp'+str(i)+'.cfg'
-    
-    cfg_out=open(cfg_file_out, 'w')
-    
-    
-    for line in open(cfg_file):
-    
-     key=line.split('=')[0]
-     
-     if key=='out_folder':
-         line='out_folder='+output_folder+'/exp'+str(i)+'\n'
-     
-     hyper_found=False
-     for hyperparam in  hyperparam_list:
-         
-      key_hyper=hyperparam.split('=')[0]
-    
-      if key==key_hyper:
-        
-       if "randint" in hyperparam:
-        [lower,higher] = re.search('randint\((.+?)\)', hyperparam).group(1).split(',')
-        value_hyper=randint(int(lower), int(higher))
-        hyper_found=True
-    
-       if "randfloat" in hyperparam:
-        [lower,higher] = re.search('randfloat\((.+?)\)', hyperparam).group(1).split(',')
-        value_hyper=random.uniform(float(lower), float(higher))
-        hyper_found=True
-        
-       if "choose_str" in hyperparam:
-        value_hyper = random.choice(re.search('\{(.+?)\}', hyperparam).group(1).split('|'))
-        hyper_found=True
-    
-       if "choose_int" in hyperparam:
-        value_hyper = int(random.choice(re.search('\{(.+?)\}', hyperparam).group(1).split('|')))
-        hyper_found=True
-    
-       if "choose_float" in hyperparam:
-        value_hyper = float(random.choice(re.search('\{(.+?)\}', hyperparam).group(1).split('|')))    
-        hyper_found=True
-        
-       line_out=key+'='+str(value_hyper)+'\n'
-    
-       
-     if not(hyper_found):
-      line_out=line
-    
-     cfg_out.write(line_out)
-    
-    print('Done %s'%cfg_file_out)
-        
-    cfg_out.close()   
+    for i in range(N_exp):
 
+        cfg_file_out = output_folder + '/exp' + str(i) + '.cfg'
 
-    
-    
+        with open(cfg_file_out, 'wt') as cfg_out, \
+             open(cfg_file, 'rt') as cfg_in:
+            for line in cfg_in:
+
+                key = line.split('=')[0]
+
+                if key == 'out_folder':
+                    line = 'out_folder=' + output_folder + '/exp' + str(i) + '\n'
+
+                hyper_found = False
+                for hyperparam in hyperparam_list:
+
+                    key_hyper = hyperparam.split('=')[0]
+
+                    if key == key_hyper:
+
+                        if "randint" in hyperparam:
+                            lower, higher = re.search('randint\((.+?)\)',
+                                                      hyperparam).group(1).split(
+                                ',')
+                            value_hyper = randint(int(lower), int(higher))
+                            hyper_found = True
+
+                        if "randfloat" in hyperparam:
+                            lower, higher = re.search('randfloat\((.+?)\)',
+                                                      hyperparam).group(1).split(
+                                ',')
+                            value_hyper = random.uniform(float(lower),
+                                                         float(higher))
+                            hyper_found = True
+
+                        if "choose_str" in hyperparam:
+                            value_hyper = random.choice(
+                                re.search('\{(.+?)\}', hyperparam).group(1).split(
+                                    '|'))
+                            hyper_found = True
+
+                        if "choose_int" in hyperparam:
+                            value_hyper = int(random.choice(
+                                re.search('\{(.+?)\}', hyperparam).group(1).split(
+                                    '|')))
+                            hyper_found = True
+
+                        if "choose_float" in hyperparam:
+                            value_hyper = float(random.choice(
+                                re.search('\{(.+?)\}', hyperparam).group(1).split(
+                                    '|')))
+                            hyper_found = True
+
+                        line_out = key + '=' + str(value_hyper) + '\n'
+
+                if not hyper_found:
+                    line_out = line
+
+                cfg_out.write(line_out)
+
+            print('Done %s' % cfg_file_out)
