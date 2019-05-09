@@ -23,6 +23,9 @@ To improve transparency and replicability of speech recognition results, we give
 
 [See a short introductory video on the PyTorch-Kaldi Toolkit](https://www.youtube.com/watch?v=VDQaf0SS4K0&t=2s)
 
+## Next Version
+We are actively working on the next version of PyTorch-Kaldi (v0.2). The architecture of the toolkit will be more modular and flexible. Beyond speech recognition, the new toolkit will be suitable for other applications such as speaker recognition, speech enhancement, speech separation, etc.
+The toolkit will support labels and features in many different formats (not just the current kaldi one) and will be much easier feeding the system with the raw samples directly. The toolkit will support a number of data processing functions, including data augmentation and contamination. We are also working to support self-supervised training.  
 
 ## Table of Contents
 * [Introduction](#introduction)
