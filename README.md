@@ -285,7 +285,7 @@ steps/align_fmllr.sh --nj 10 data/test_clean data/lang exp/tri4b exp/tri4b_ali_t
 
 4. run the experiments with the following command:
 ```
-  python run_exp.py cfg/Librispeech_baselines/libri_MLP_fmllr.cfg.
+  python run_exp.py cfg/Librispeech_baselines/libri_MLP_fmllr.cfg
 ```
 
 If you would like to use a recurrent model you can use *libri_RNN_fmllr.cfg*, *libri_LSTM_fmllr.cfg*, *libri_GRU_fmllr.cfg*, or *libri_liGRU_fmllr.cfg*. The training of recurrent models might take some days (depending on the adopted GPU).  The performance obtained with the tgsmall graph are reported in the following table:
