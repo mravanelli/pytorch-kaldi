@@ -172,14 +172,11 @@ def read_lab_fea(cfg_file,fea_only,shared_list,output_folder):
     if to_do=='forward':
         max_seq_length=-1 # do to break forward sentences
     
-    
-    [fea_dict,lab_dict,arch_dict]=dict_fea_lab_arch(config)
-    
+    [fea_dict,lab_dict,arch_dict]=dict_fea_lab_arch(config,fea_only)
     [cw_left_max,cw_right_max]=compute_cw_max(fea_dict)
     
     fea_index=0
     cnt_fea=0
-
     for fea in fea_dict.keys():
         
         # reading the features
@@ -193,9 +190,7 @@ def read_lab_fea(cfg_file,fea_only,shared_list,output_folder):
         # Production case, we don't have labels (lab_name = none)
         if fea_only:
           lab_dict.update({'lab_name':'none'})
-
         for lab in lab_dict.keys():
-            
             # Production case, we don't have labels (lab_name = none)
             if fea_only:
               lab_folder=None 

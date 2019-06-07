@@ -1529,12 +1529,11 @@ def list_fea_lab_arch(config): # cancel
 
 
 
-def dict_fea_lab_arch(config):
+def dict_fea_lab_arch(config, fea_only):
     model=config['model']['model'].split('\n')
     fea_lst=list(re.findall('fea_name=(.*)\n',config['data_chunk']['fea'].replace(' ','')))
     lab_lst=list(re.findall('lab_name=(.*)\n',config['data_chunk']['lab'].replace(' ','')))
 
-    
     fea_lst_used=[]
     lab_lst_used=[]
     arch_lst_used=[]
@@ -1578,7 +1577,7 @@ def dict_fea_lab_arch(config):
                 
             
             fea_lst_used_name.append(inp2)
-        if inp1 in lab_lst and inp1 not in lab_lst_used_name:
+        if inp1 in lab_lst and inp1 not in lab_lst_used_name and not fea_only:
             pattern_lab="lab_name="+inp1+"\nlab_folder=(.*)\nlab_opts=(.*)"
             
             if sys.version_info[0]==2:
@@ -1589,10 +1588,10 @@ def dict_fea_lab_arch(config):
                 lab_dict_used[inp1]=(inp1+","+",".join(list(re.findall(pattern_lab,lab_field)[0]))).split(',')
             
             lab_lst_used_name.append(inp1)
-            
-        if inp2 in lab_lst and inp2 not in lab_lst_used_name:
+        
+        if inp2 in lab_lst and inp2 not in lab_lst_used_name and not fea_only:
+            # Testing production case (no labels)
             pattern_lab="lab_name="+inp2+"\nlab_folder=(.*)\nlab_opts=(.*)"
-            
             if sys.version_info[0]==2:
                 lab_lst_used.append((inp2+","+",".join(list(re.findall(pattern_lab,lab_field)[0]))).encode('utf8').split(','))
                 lab_dict_used[inp2]=(inp2+","+",".join(list(re.findall(pattern_lab,lab_field)[0]))).encode('utf8').split(',')
