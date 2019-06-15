@@ -16,6 +16,7 @@ import torch
 from distutils.util import strtobool
 import time
 import threading
+import torch 
 
 from data_io import read_lab_fea,open_or_fd,write_mat
 from utils import shift
@@ -107,15 +108,18 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
     optimizers=optimizer_init(nns,config,arch_dict)
            
     
-    # pre-training
+    # pre-training and multi-gpu init
     for net in nns.keys():
       pt_file_arch=config[arch_dict[net][0]]['arch_pretrain_file']
-      
+            
       if pt_file_arch!='none':        
           checkpoint_load = torch.load(pt_file_arch)
           nns[net].load_state_dict(checkpoint_load['model_par'])
           optimizers[net].load_state_dict(checkpoint_load['optimizer_par'])
           optimizers[net].param_groups[0]['lr']=float(config[arch_dict[net][0]]['arch_lr']) # loading lr of the cfg file for pt
+       
+      if multi_gpu:
+        nns[net] = torch.nn.DataParallel(nns[net])
           
     
     
@@ -270,7 +274,11 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
     
          for net in nns.keys():
              checkpoint={}
-             checkpoint['model_par']=nns[net].state_dict()
+             if multi_gpu:
+                checkpoint['model_par']=nns[net].module.state_dict()
+             else:
+                checkpoint['model_par']=nns[net].state_dict()
+             
              checkpoint['optimizer_par']=optimizers[net].state_dict()
              
              out_file=info_file.replace('.info','_'+arch_dict[net][0]+'.pkl')

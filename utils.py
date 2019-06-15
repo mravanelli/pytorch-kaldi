@@ -610,7 +610,7 @@ def check_cfg(cfg_file,config,cfg_file_proto):
                         
                 else:
                     # Try to automatically retrieve the count file from the config file
-        
+                
                         
                     # Compute the number of context-dependent phone states    
                     if "ali-to-pdf" in lab_opts[lab_lst.index(forward_norm_lst[i])]:
@@ -621,7 +621,6 @@ def check_cfg(cfg_file,config,cfg_file_proto):
                         if output.decode().rstrip()=='':
                             sys.stderr.write("ERROR: hmm-info command doesn't exist. Make sure your .bashrc contains the Kaldi paths and correctly exports it.\n")
                             sys.exit(0)
-
                         N_out=int(output.decode().rstrip())
                         N_out_lab[lab_lst.index(forward_norm_lst[i])]=N_out
                         count_file_path=out_folder+'/exp_files/forward_'+forward_out_lst[i]+'_'+forward_norm_lst[i]+'.count'
@@ -1687,15 +1686,11 @@ def model_init(inp_out_dict,model,config,arch_dict,use_cuda,multi_gpu,to_do):
             
             # initialize the neural network
             net=nn_class(config[arch_dict[inp1][0]],inp_dim)
-    
-    
             
             if use_cuda:
                 net.cuda()
-                if multi_gpu:
-                    net = nn.DataParallel(net)
-                    
-            
+
+
             if to_do=='train':
                 if not(arch_freeze_flag):
                     net.train()
@@ -1709,10 +1704,7 @@ def model_init(inp_out_dict,model,config,arch_dict,use_cuda,multi_gpu,to_do):
             # addigng nn into the nns dict
             nns[arch_dict[inp1][1]]=net
             
-            if multi_gpu:
-                out_dim=net.module.out_dim
-            else:
-                out_dim=net.out_dim
+            out_dim=net.out_dim
                 
             # updating output dim
             inp_out_dict[out_name]=[out_dim]
