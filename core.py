@@ -113,7 +113,10 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
       pt_file_arch=config[arch_dict[net][0]]['arch_pretrain_file']
             
       if pt_file_arch!='none':        
-          checkpoint_load = torch.load(pt_file_arch)
+          if use_cuda:
+            checkpoint_load = torch.load(pt_file_arch)
+          else:
+            checkpoint_load = torch.load(pt_file_arch, map_location='cpu')
           nns[net].load_state_dict(checkpoint_load['model_par'])
           optimizers[net].load_state_dict(checkpoint_load['optimizer_par'])
           optimizers[net].param_groups[0]['lr']=float(config[arch_dict[net][0]]['arch_lr']) # loading lr of the cfg file for pt
