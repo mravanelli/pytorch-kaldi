@@ -21,7 +21,7 @@ import torch
 from data_io import read_lab_fea,open_or_fd,write_mat
 from utils import shift
 
-def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_file,processed_first,next_config_file):
+def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_file,processed_first,next_config_file,dry_run=False):
     
     # This function processes the current chunk using the information in cfg_file. In parallel, the next chunk is load into the CPU memory
     
@@ -205,13 +205,17 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
     
         if to_do=='train':
             # Forward input, with autograd graph active
-            outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
+            if not dry_run:
+                outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
+            else:
+                outs_dict = dict()
             
             for opt in optimizers.keys():
                 optimizers[opt].zero_grad()
                 
     
-            outs_dict['loss_final'].backward()
+            if not dry_run:
+                outs_dict['loss_final'].backward()
             
             # Gradient Clipping (th 0.1)
             #for net in nns.keys():
@@ -223,24 +227,28 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
                     optimizers[opt].step()
         else:
             with torch.no_grad(): # Forward input without autograd graph (save memory)
-                outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
+                if not dry_run:
+                    outs_dict=forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
+                else:
+                    outs_dict = dict()
     
                     
-        if to_do=='forward':
-            for out_id in range(len(forward_outs)):
-                
-                out_save=outs_dict[forward_outs[out_id]].data.cpu().numpy()
-                
-                if forward_normalize_post[out_id]:
-                    # read the config file
-                    counts = load_counts(forward_count_files[out_id])
-                    out_save=out_save-np.log(counts/np.sum(counts))             
+        if not dry_run:
+            if to_do=='forward':
+                for out_id in range(len(forward_outs)):
                     
-                # save the output    
-                write_mat(output_folder,post_file[forward_outs[out_id]], out_save, data_name[i])
-        else:
-            loss_sum=loss_sum+outs_dict['loss_final'].detach()
-            err_sum=err_sum+outs_dict['err_final'].detach()
+                    out_save=outs_dict[forward_outs[out_id]].data.cpu().numpy()
+                    
+                    if forward_normalize_post[out_id]:
+                        # read the config file
+                        counts = load_counts(forward_count_files[out_id])
+                        out_save=out_save-np.log(counts/np.sum(counts))             
+                        
+                    # save the output    
+                    write_mat(output_folder,post_file[forward_outs[out_id]], out_save, data_name[i])
+            else:
+                loss_sum=loss_sum+outs_dict['loss_final'].detach()
+                err_sum=err_sum+outs_dict['err_final'].detach()
            
         # update it to the next batch 
         beg_batch=end_batch
