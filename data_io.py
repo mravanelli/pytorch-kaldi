@@ -75,7 +75,11 @@ def load_dataset(fea_scp,fea_opts,lab_folder,lab_opts,left,right, max_sequence_l
         lab_conc = list()
         feature_keys_soted_by_sequence_length = sorted(sorted(fea.keys()), key=lambda k: len(fea[k]))
         for k in feature_keys_soted_by_sequence_length:
-            fea_chunked, lab_chunked = _chunk_features_and_labels(max_sequence_length, fea[k], lab[k], fea_only)
+            fea_el = fea[k]
+            lab_el = None
+            if not fea_only:
+                lab_el = lab[k]
+            fea_chunked, lab_chunked = _chunk_features_and_labels(max_sequence_length, fea_el, lab_el, fea_only)
             fea_conc, lab_conc = _append_to_concat_list(fea_chunked, lab_chunked, fea_conc, lab_conc, k)
         return fea_conc, lab_conc, snt_name
     def _concatenate_features_and_labels(fea_conc, lab_conc):
