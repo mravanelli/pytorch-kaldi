@@ -493,7 +493,7 @@ def read_vec_flt_scp(file_or_fd,output_folder):
   try:
     for line in fd:
       (key,rxfile) = line.decode().split(' ')
-      vec = read_vec_flt(rxfile)
+      vec = read_vec_flt(rxfile,output_folder)
       yield key, vec
   finally:
     if fd is not file_or_fd : fd.close()
@@ -510,7 +510,7 @@ def read_vec_flt_ark(file_or_fd,output_folder):
   try:
     key = read_key(fd)
     while key:
-      ali = read_vec_flt(fd)
+      ali = read_vec_flt(fd,output_folder)
       yield key, ali
       key = read_key(fd)
   finally:
@@ -524,6 +524,8 @@ def read_vec_flt(file_or_fd,output_folder):
   binary = fd.read(2).decode()
   if binary == '\0B': # binary flag
     return _read_vec_flt_binary(fd)
+  elif binary == 'RI':
+    return _read_vec_flt_riff(fd)
   else:  # ascii,
     arr = (binary + fd.readline().decode()).strip().split()
     try:
@@ -533,6 +535,26 @@ def read_vec_flt(file_or_fd,output_folder):
     ans = np.array(arr, dtype=float)
   if fd is not file_or_fd : fd.close() # cleanup
   return ans
+
+def _read_vec_flt_riff(fd):
+    RIFF_CHUNK_DESCR_HEADER_SIZE = 12
+    ALREADY_READ_HEADER_BYTES = 2
+    SUB_CHUNK_HEADER_SIZE = 8
+    DATA_CHUNK_HEADER_SIZE = 8
+    def pcm2float(signal, dtype='float32'):
+        signal = np.asarray(signal)
+        dtype = np.dtype(dtype)
+        return signal.astype(dtype) / dtype.type(-np.iinfo(signal.dtype).min)
+
+    import struct
+    header = fd.read(RIFF_CHUNK_DESCR_HEADER_SIZE - ALREADY_READ_HEADER_BYTES)
+    assert header[:2] == b'FF'
+    chunk_header = fd.read(SUB_CHUNK_HEADER_SIZE)
+    subchunk_id, subchunk_size = struct.unpack('<4sI', chunk_header)
+    aformat, channels, samplerate, byterate, block_align, bps = struct.unpack('HHIIHH', fd.read(subchunk_size))
+    subchunk2_id, subchunk2_size = struct.unpack('<4sI', fd.read(DATA_CHUNK_HEADER_SIZE))
+    pcm_data = np.frombuffer(fd.read(subchunk2_size), dtype='int' + str(bps))
+    return pcm2float(pcm_data)
 
 def _read_vec_flt_binary(fd):
   header = fd.read(3).decode()
@@ -551,7 +573,6 @@ def _read_vec_flt_binary(fd):
   elif sample_size == 8 : ans = np.frombuffer(buf, dtype='float64')
   else : raise BadSampleSize
   return ans
-
 
 # Writing,
 def write_vec_flt(file_or_fd, output_folder, v, key=''):
@@ -625,7 +646,6 @@ def read_mat_ark(file_or_fd,output_folder):
    Read ark to a 'dictionary':
    d = { key:mat for key,mat in kaldi_io.read_mat_ark(file) }
   """
-
 
   fd = open_or_fd(file_or_fd,output_folder)
   try:
