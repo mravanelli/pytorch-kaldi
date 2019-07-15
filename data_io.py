@@ -12,78 +12,100 @@ import os
 import configparser
 import re, gzip, struct
 
-
 def load_dataset(fea_scp,fea_opts,lab_folder,lab_opts,left,right, max_sequence_length, output_folder, fea_only=False):
-
-    
-    fea = { k:m for k,m in read_mat_ark('ark:copy-feats scp:'+fea_scp+' ark:- |'+fea_opts,output_folder) }
-
-    if not fea_only:
-      lab = { k:v for k,v in read_vec_int_ark('gunzip -c '+lab_folder+'/ali*.gz | '+lab_opts+' '+lab_folder+'/final.mdl ark:- ark:-|',output_folder)  if k in fea} # Note that I'm copying only the aligments of the loaded fea
-      fea = {k: v for k, v in fea.items() if k in lab} # This way I remove all the features without an aligment (see log file in alidir "Did not Succeded")
-
-    end_snt=0
-    end_index=[]
-    snt_name=[]
-    fea_conc=[]
-    lab_conc=[]
-    
-    tmp=0
-    for k in sorted(sorted(fea.keys()), key=lambda k: len(fea[k])):
-
-        #####
-        # If the sequence length is above the threshold, we split it with a minimal length max/4
-        # If max length = 500, then the split will start at 500 + (500/4) = 625. 
-        # A seq of length 625 will be splitted in one of 500 and one of 125
-
-        
-        if(len(fea[k]) > max_sequence_length) and max_sequence_length>0:
-
-          fea_chunked = []
-          lab_chunked = []
-
-          for i in range((len(fea[k]) + max_sequence_length - 1) // max_sequence_length):
-            if(len(fea[k][i * max_sequence_length:]) > max_sequence_length + (max_sequence_length/4)):
-              fea_chunked.append(fea[k][i * max_sequence_length:(i + 1) * max_sequence_length])
-              if not fea_only:
-                lab_chunked.append(lab[k][i * max_sequence_length:(i + 1) * max_sequence_length])
-              else:
-                lab_chunked.append(np.zeros((fea[k][i * max_sequence_length:(i + 1) * max_sequence_length].shape[0],)))
+    def _read_features_and_labels_with_kaldi(fea_scp, fea_opts, fea_only, lab_folder, lab_opts, output_folder):
+        fea = dict()
+        lab = dict()
+        fea = { k:m for k,m in read_mat_ark('ark:copy-feats scp:'+fea_scp+' ark:- |'+fea_opts,output_folder) }
+        if not fea_only:
+            lab = { k:v for k,v in read_vec_int_ark('gunzip -c '+lab_folder+'/ali*.gz | '+lab_opts+' '+lab_folder+'/final.mdl ark:- ark:-|',output_folder)  if k in fea} # Note that I'm copying only the aligments of the loaded fea
+            fea = {k: v for k, v in fea.items() if k in lab} # This way I remove all the features without an aligment (see log file in alidir "Did not Succeded")
+        return fea, lab
+    def _chunk_features_and_labels(max_sequence_length, fea, lab, fea_only):
+        def _append_to_concat_list(fea_chunked, lab_chunked, fea_conc, lab_conc, name):
+            for j in range(0, len(fea_chunked)):
+                fea_conc.append(fea_chunked[j])
+                lab_conc.append(lab_chunked[j])
+                if len(fea_chunked) > 1:
+                    snt_name.append(name+'_split'+str(j))
+                else:
+                    snt_name.append(k)
+            return fea_conc, lab_conc
+        def _chunk_features_and_labels(max_sequence_length, fea, lab, fea_only):
+            ''' 
+            If the sequence length is above the threshold, we split it with a minimal length max/4
+            If max length = 500, then the split will start at 500 + (500/4) = 625. 
+            A seq of length 625 will be splitted in one of 500 and one of 125
+            '''
+            fea_chunked = list()
+            lab_chunked = list()
+            split_threshold = max_sequence_length + (max_sequence_length/4)
+            if(len(fea) > max_sequence_length) and max_sequence_length>0:
+                nr_of_chunks = (len(fea) + max_sequence_length - 1) // max_sequence_length
+                for i in range(nr_of_chunks):
+                    chunk_start = i * max_sequence_length
+                    if(len(fea[chunk_start:]) > split_threshold):
+                        chunk_end = (i + 1) * max_sequence_length
+                        fea_chunk = fea[chunk_start:chunk_end]
+                        if not fea_only:
+                            lab_chunk = lab[chunk_start:chunk_end]
+                        else:
+                            lab_chunk = np.zeros((fea_chunk.shape[0],))
+                        fea_chunked.append(fea_chunk)
+                        lab_chunked.append(lab_chunk)
+                    else:
+                        fea_chunk = fea[chunk_start:]
+                        if not fea_only:
+                            lab_chunk = lab[chunk_start:]
+                        else:
+                            lab_chunk = np.zeros((fea_chunk.shape[0],))
+                        lab_chunked.append(lab_chunk)
+                        fea_chunked.append(fea_chunk)
+                        break
             else:
-              fea_chunked.append(fea[k][i * max_sequence_length:])
-              if not fea_only:
-                lab_chunked.append(lab[k][i * max_sequence_length:])
-              else:
-                lab_chunked.append(np.zeros((fea[k][i * max_sequence_length:].shape[0],)))
-              break
+                fea_chunked.append(fea)
+                if not fea_only:
+                  lab_chunked.append(lab)
+                else:
+                  lab_chunked.append(np.zeros((fea.shape[0],)))
+            return fea_chunked, lab_chunked
 
-          for j in range(0, len(fea_chunked)):
-            fea_conc.append(fea_chunked[j])
-            lab_conc.append(lab_chunked[j])
-            snt_name.append(k+'_split'+str(j))
-            
-        else:
-          fea_conc.append(fea[k])
-          if not fea_only:
-            lab_conc.append(lab[k])
-          else:
-            lab_conc.append(np.zeros((fea[k].shape[0],)))
-          snt_name.append(k)
+        snt_name = list()
+        fea_conc = list()
+        lab_conc = list()
+        feature_keys_soted_by_sequence_length = sorted(sorted(fea.keys()), key=lambda k: len(fea[k]))
+        for k in feature_keys_soted_by_sequence_length:
+            fea_el = fea[k]
+            lab_el = None
+            if not fea_only:
+                lab_el = lab[k]
+            fea_chunked, lab_chunked = _chunk_features_and_labels(max_sequence_length, fea_el, lab_el, fea_only)
+            fea_conc, lab_conc = _append_to_concat_list(fea_chunked, lab_chunked, fea_conc, lab_conc, k)
+        return fea_conc, lab_conc, snt_name
+    def _concatenate_features_and_labels(fea_conc, lab_conc):
+        def _sort_chunks_by_length(fea_conc, lab_conc):
+            fea_zipped = zip(fea_conc,lab_conc)
+            fea_sorted = sorted(fea_zipped, key=lambda x: x[0].shape[0])
+            fea_conc,lab_conc = zip(*fea_sorted)
+            return fea_conc, lab_conc
+        def _get_end_index_from_fea_list(fea_conc):
+            end_snt=0
+            end_index=list()
+            for entry in fea_conc:
+                end_snt=end_snt+entry.shape[0]
+                end_index.append(end_snt)
+            return end_index
 
-        tmp+=1
+        fea_conc, lab_conc = _sort_chunks_by_length(fea_conc, lab_conc)
+        end_index = _get_end_index_from_fea_list(fea_conc)
+        fea_conc=np.concatenate(fea_conc)
+        lab_conc=np.concatenate(lab_conc)
+        return fea_conc, lab_conc, end_index
 
-    fea_zipped = zip(fea_conc,lab_conc)
-    fea_sorted = sorted(fea_zipped, key=lambda x: x[0].shape[0])
-    fea_conc,lab_conc = zip(*fea_sorted)
-      
-    for entry in fea_conc:
-      end_snt=end_snt+entry.shape[0]
-      end_index.append(end_snt)
-
-    fea_conc=np.concatenate(fea_conc)
-    lab_conc=np.concatenate(lab_conc)
-
-    return [snt_name,fea_conc,lab_conc,np.asarray(end_index)] 
+    fea, lab = _read_features_and_labels_with_kaldi(fea_scp, fea_opts, fea_only, lab_folder, lab_opts, output_folder)
+    fea_chunks, lab_chunks, chunk_names = _chunk_features_and_labels(max_sequence_length, fea, lab, fea_only)
+    fea_conc, lab_conc, end_index = _concatenate_features_and_labels(fea_chunks, lab_chunks)
+    return [chunk_names,fea_conc,lab_conc,np.asarray(end_index)] 
 
 
 def context_window_old(fea,left,right):
