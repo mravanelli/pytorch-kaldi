@@ -22,6 +22,7 @@ import re
 from distutils.util import strtobool
 import importlib
 import math
+import multiprocessing
 
 # Reading global cfg file (first argument-mandatory file) 
 cfg_file=sys.argv[1]
@@ -308,6 +309,7 @@ for forward_data in forward_data_lst:
          N_ck_forward=compute_n_chunks(out_folder,forward_data,ep,N_ep_str_format,'forward')
          N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_forward)),1))+'d'
          
+         kwargs_list = list()
          for ck in range(N_ck_forward):
             
             if not is_production:
@@ -329,7 +331,15 @@ for forward_data in forward_data_lst:
                 next_config_file=cfg_file_list[op_counter]
 
                 # run chunk processing                    
-                [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
+                #[data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
+                kwargs = dict()
+                for e in ['data_name','data_set','data_end_index','fea_dict','lab_dict','arch_dict','config_chunk_file','processed_first','next_config_file']:
+                    if e == "config_chunk_file":
+                        kwargs['cfg_file'] = eval(e)
+                    else:
+                        kwargs[e] = eval(e)
+                kwargs_list.append(kwargs)
+                [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file,dry_run=True)
                 
                 
                 # update the first_processed variable
@@ -342,6 +352,14 @@ for forward_data in forward_data_lst:
             
             # update the operation counter
             op_counter+=1
+         processes = list()
+         for kwargs in kwargs_list:
+             p = multiprocessing.Process(target=run_nn, kwargs=kwargs)
+             processes.append(p)
+             p.start()
+         for process in processes:
+             process.join()
+            
                     
                
             
