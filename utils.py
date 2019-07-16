@@ -1792,60 +1792,59 @@ def optimizer_init(nns,config,arch_dict):
     return optimizers
 
 
-def forward_model_refac01(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,ref,inp_out_dict,max_len,batch_size,to_do,forward_outs):
+def forward_model_refac01(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len, batch_size, to_do, forward_outs):
     def _add_input_features_to_outs_dict(fea_dict, outs_dict, inp):
         for fea in fea_dict.keys():
-            if len(inp.shape)==3 and len(fea_dict[fea])>1:
-                outs_dict[fea]=inp[:,:,fea_dict[fea][5]:fea_dict[fea][6]]
-            if len(inp.shape)==2 and len(fea_dict[fea])>1:
-                outs_dict[fea]=inp[:,fea_dict[fea][5]:fea_dict[fea][6]]
+            if len(inp.shape) == 3 and len(fea_dict[fea]) > 1:
+                outs_dict[fea] = inp[:,:,fea_dict[fea][5]:fea_dict[fea][6]]
+            if len(inp.shape) == 2 and len(fea_dict[fea]) > 1:
+                outs_dict[fea] = inp[:,fea_dict[fea][5]:fea_dict[fea][6]]
         return outs_dict
     def _compute_layer_values(inp_out_dict, inp2, inp, inp1, max_len, batch_size, arch_dict, out_name, nns, outs_dict, to_do):
         def _is_input_feature(inp_out_dict, inp2):
-            if len(inp_out_dict[inp2])>1:
+            if len(inp_out_dict[inp2]) > 1:
                 return True
             return False
         def _extract_respective_feature_from_input(inp, inp_out_dict, inp2, arch_dict, inp1, max_len, batch_size):
-            if len(inp.shape)==3:
-                inp_dnn=inp[:,:,inp_out_dict[inp2][-3]:inp_out_dict[inp2][-2]]
+            if len(inp.shape) ==3 :
+                inp_dnn = inp
                 if not(bool(arch_dict[inp1][2])):
-                    inp_dnn=inp_dnn.view(max_len*batch_size,-1)
-            if len(inp.shape)==2:
-                inp_dnn=inp[:,inp_out_dict[inp2][-3]:inp_out_dict[inp2][-2]]
+                    inp_dnn = inp_dnn.view(max_len*batch_size,-1)
+            if len(inp.shape) == 2:
+                inp_dnn = inp
                 if bool(arch_dict[inp1][2]):
-                    inp_dnn=inp_dnn.view(max_len,batch_size,-1)
+                    inp_dnn = inp_dnn.view(max_len,batch_size,-1)
             return inp_dnn
         
         do_break = False
         if _is_input_feature(inp_out_dict, inp2):
             inp_dnn = _extract_respective_feature_from_input(inp, inp_out_dict, inp2, arch_dict, inp1, max_len, batch_size)
-            outs_dict[out_name]=nns[inp1](inp_dnn)
+            outs_dict[out_name] = nns[inp1](inp_dnn)
         else:
-            if not(bool(arch_dict[inp1][2])) and len(outs_dict[inp2].shape)==3:
-                outs_dict[inp2]=outs_dict[inp2].view(max_len*batch_size,-1)
-            if bool(arch_dict[inp1][2]) and len(outs_dict[inp2].shape)==2:
-                outs_dict[inp2]=outs_dict[inp2].view(max_len,batch_size,-1)
-            outs_dict[out_name]=nns[inp1](outs_dict[inp2])
-        if to_do=='forward' and out_name==forward_outs[-1]:
+            if not(bool(arch_dict[inp1][2])) and len(outs_dict[inp2].shape) == 3:
+                outs_dict[inp2] = outs_dict[inp2].view(max_len*batch_size,-1)
+            if bool(arch_dict[inp1][2]) and len(outs_dict[inp2].shape) == 2:
+                outs_dict[inp2] = outs_dict[inp2].view(max_len,batch_size,-1)
+            outs_dict[out_name] = nns[inp1](outs_dict[inp2])
+        if to_do == 'forward' and out_name == forward_outs[-1]:
             do_break = True
         return outs_dict, do_break
-    def _get_labels_from_input(inp, inp2, lab_dict):
+    def _get_labels_from_input(ref, inp2, lab_dict):
         if len(inp.shape)==3:
-            lab_dnn=inp[:,:,lab_dict[inp2][3]]
+            lab_dnn = ref 
         if len(inp.shape)==2:
-            lab_dnn=inp[:,lab_dict[inp2][3]]
+            lab_dnn = ref 
         lab_dnn=lab_dnn.view(-1).long()
         return lab_dnn
     def _get_network_output(outs_dict, inp1, max_len, batch_size):
         out=outs_dict[inp1]
-        if len(out.shape)==3:
-            out=out.view(max_len*batch_size,-1)
+        if len(out.shape) == 3:
+            out = out.view(max_len*batch_size, -1)
         return out
 
-    inp = torch.cat((inp, ref), -1)
     outs_dict={}
     _add_input_features_to_outs_dict(fea_dict, outs_dict, inp)
-    layer_string_pattern='(.*)=(.*)\((.*),(.*)\)'
+    layer_string_pattern = '(.*)=(.*)\((.*),(.*)\)'
     for line in model:
         out_name, operation, inp1, inp2 = list(re.findall(layer_string_pattern,line)[0])
         if operation == 'compute':
@@ -1853,12 +1852,12 @@ def forward_model_refac01(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,ref,in
             if do_break:
                 break
         elif operation == 'cost_nll':
-            lab_dnn = _get_labels_from_input(inp, inp2, lab_dict)
+            lab_dnn = _get_labels_from_input(ref, inp2, lab_dict)
             out = _get_network_output(outs_dict, inp1, max_len, batch_size)
             if to_do != 'forward':
                 outs_dict[out_name]=costs[out_name](out, lab_dnn)
         elif operation == 'cost_err':
-            lab_dnn = _get_labels_from_input(inp, inp2, lab_dict)
+            lab_dnn = _get_labels_from_input(ref, inp2, lab_dict)
             out = _get_network_output(outs_dict, inp1, max_len, batch_size)
             if to_do != 'forward':
                 pred = torch.max(out,dim=1)[1] 
