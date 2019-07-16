@@ -714,7 +714,7 @@ def create_configs(config):
     if len(max_seq_length_train.split(',')) == 1:
         max_seq_length_tr_arr=expand_str_ep(max_seq_length_train,'int',N_ep,'|','*')
     else:
-        max_seq_length_tr_arr=[max_seq_length_train] * N_ep #TBD !!!
+        max_seq_length_tr_arr=[max_seq_length_train] * N_ep
 
 
     cfg_file_proto=config['cfg_proto']['cfg_proto']
@@ -766,7 +766,7 @@ def create_configs(config):
         if len(max_seq_length_train.split(',')) == 1:
             max_seq_length_train_curr=int(max_seq_length_train_curr)
         else:
-            #TBD !!!
+            # TODO: add support for increasing seq length when fea and lab have different time dimensionality
             pass
 
     for ep in range(N_ep):
@@ -836,7 +836,7 @@ def create_configs(config):
                 if max_seq_length_train_curr>int(max_seq_length_tr_arr[ep]):
                     max_seq_length_train_curr=int(max_seq_length_tr_arr[ep])
             else:
-                #TBD !!!
+                # TODO: add support for increasing seq length when fea and lab have different time dimensionality
                 pass
             
         
@@ -1807,7 +1807,7 @@ def optimizer_init(nns,config,arch_dict):
     return optimizers
 
 
-def forward_model_refac01(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len, batch_size, to_do, forward_outs):
+def forward_model_refac01(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len_fea, max_len_lab, batch_size, to_do, forward_outs):
     def _add_input_features_to_outs_dict(fea_dict, outs_dict, inp):
         for fea in fea_dict.keys():
             if len(inp.shape) == 3 and len(fea_dict[fea]) > 1:
@@ -1837,8 +1837,9 @@ def forward_model_refac01(fea_dict, lab_dict, arch_dict, model, nns, costs, inp,
             outs_dict[out_name] = nns[inp1](inp_dnn)
         else:
             if not(bool(arch_dict[inp1][2])) and len(outs_dict[inp2].shape) == 3:
-                outs_dict[inp2] = outs_dict[inp2].view(max_len*batch_size,-1)
+                outs_dict[inp2] = outs_dict[inp2].view(outs_dict[inp2].shape[0]*outs_dict[inp2].shape[1],-1)
             if bool(arch_dict[inp1][2]) and len(outs_dict[inp2].shape) == 2:
+                # TODO: This computation needs to be made independent of max_len in case the network is performing sub sampling in time
                 outs_dict[inp2] = outs_dict[inp2].view(max_len,batch_size,-1)
             outs_dict[out_name] = nns[inp1](outs_dict[inp2])
         if to_do == 'forward' and out_name == forward_outs[-1]:
@@ -1863,17 +1864,17 @@ def forward_model_refac01(fea_dict, lab_dict, arch_dict, model, nns, costs, inp,
     for line in model:
         out_name, operation, inp1, inp2 = list(re.findall(layer_string_pattern,line)[0])
         if operation == 'compute':
-            outs_dict, do_break = _compute_layer_values(inp_out_dict, inp2, inp, inp1, max_len, batch_size, arch_dict, out_name, nns, outs_dict, to_do)
+            outs_dict, do_break = _compute_layer_values(inp_out_dict, inp2, inp, inp1, max_len_fea, batch_size, arch_dict, out_name, nns, outs_dict, to_do)
             if do_break:
                 break
         elif operation == 'cost_nll':
             lab_dnn = _get_labels_from_input(ref, inp2, lab_dict)
-            out = _get_network_output(outs_dict, inp1, max_len, batch_size)
+            out = _get_network_output(outs_dict, inp1, max_len_lab, batch_size)
             if to_do != 'forward':
                 outs_dict[out_name]=costs[out_name](out, lab_dnn)
         elif operation == 'cost_err':
             lab_dnn = _get_labels_from_input(ref, inp2, lab_dict)
-            out = _get_network_output(outs_dict, inp1, max_len, batch_size)
+            out = _get_network_output(outs_dict, inp1, max_len_lab, batch_size)
             if to_do != 'forward':
                 pred = torch.max(out,dim=1)[1] 
                 err = torch.mean((pred!=lab_dnn).float())

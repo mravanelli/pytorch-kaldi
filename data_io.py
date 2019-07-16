@@ -288,12 +288,14 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
                 lab_folder = lab_dict_entr[1]
                 lab_opts = lab_dict_entr[2]
             return lab_folder, lab_opts
-        def _compensate_for_different_context_windows(data_set_fea, cw_left_max, cw_left, cw_right_max, cw_right, data_end_index_fea):
-            labs_fea = data_set_fea[cw_left_max-cw_left:data_set_fea.shape[0]-(cw_right_max-cw_right),-1]
-            data_set_fea = data_set_fea[cw_left_max-cw_left:data_set_fea.shape[0]-(cw_right_max-cw_right),0:-1]
-            data_end_index_fea = data_end_index_fea-(cw_left_max-cw_left)
-            data_end_index_fea[-1] = data_end_index_fea[-1]-(cw_right_max-cw_right)
-            return labs_fea, data_set_fea, data_end_index_fea
+        def _compensate_for_different_context_windows(data_set_fea, data_set_lab, cw_left_max, cw_left, cw_right_max, cw_right, data_end_index_fea, data_end_index_lab):
+            data_set_lab = np.take(data_set_lab, range(cw_left_max-cw_left,data_set_lab.shape[0]-(cw_right_max-cw_right)), axis=0, mode='clip')
+            data_set_fea = np.take(data_set_fea, range(cw_left_max-cw_left,data_set_fea.shape[0]-(cw_right_max-cw_right)), axis=0, mode='clip')
+            data_end_index_fea = data_end_index_fea - (cw_left_max - cw_left)
+            data_end_index_lab = data_end_index_lab - (cw_left_max - cw_left)
+            data_end_index_fea[-1] = data_end_index_fea[-1] - (cw_right_max - cw_right)
+            data_end_index_lab[-1] = data_end_index_lab[-1] - (cw_right_max - cw_right)
+            return data_set_lab, data_set_fea, data_end_index_fea, data_end_index_lab
         def _update_data(data_set, labs, fea_dict, fea, fea_index, data_set_fea, labs_fea, cnt_fea, cnt_lab):
             if cnt_fea==0 and cnt_lab==0:
                 data_set=data_set_fea
@@ -311,11 +313,14 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
                 fea_dict[fea].append(fea_index)
                 fea_dict[fea].append(fea_dict[fea][6]-fea_dict[fea][5])
             return data_set, labs, fea_dict, fea_index
-        def _check_consistency(data_name, data_name_fea, data_end_index, data_end_index_fea):
+        def _check_consistency(data_name, data_name_fea, data_end_index_fea_ini, data_end_index_fea, data_end_index_lab_ini, data_end_index_lab):
             if not (data_name == data_name_fea):
                 sys.stderr.write('ERROR: different sentence ids are detected for the different features. Plase check again input feature lists"\n')
                 sys.exit(0)
-            if not (data_end_index == data_end_index_fea).all():
+            if not (data_end_index_fea_ini == data_end_index_fea).all():
+                sys.stderr.write('ERROR end_index must be the same for all the sentences"\n')
+                sys.exit(0)
+            if not (data_end_index_lab_ini == data_end_index_lab).all():
                 sys.stderr.write('ERROR end_index must be the same for all the sentences"\n')
                 sys.exit(0)
         def _update_lab_dict(lab_dict, data_set):
@@ -324,12 +329,34 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
                 lab_dict[lab].append(data_set.shape[1]+cnt_lab)
                 cnt_lab=cnt_lab+1
             return lab_dict
-            
+        def _load_chunk_refac01(fea_scp,fea_opts,lab_folder,lab_opts,left,right,max_sequence_length, output_folder,fea_only=False):
+            [data_name,data_set,data_lab,end_index_fea,end_index_lab]=load_dataset(fea_scp,fea_opts,lab_folder,lab_opts,left,right, max_sequence_length, output_folder, fea_only)
+            # TODO: this function will currently only work well if no context window is given or fea and lab have the same time dimensionality
+            # Context window
+            if left!=0 or right!=0:
+                data_set=context_window(data_set,left,right)
+            end_index_fea = end_index_fea - left
+            end_index_lab = end_index_lab - left
+            end_index_fea[-1] = end_index_fea[-1] - right
+            end_index_lab[-1] = end_index_lab[-1] - right
+            # mean and variance normalization
+            data_set=(data_set-np.mean(data_set,axis=0))/np.std(data_set,axis=0)
+            # Label processing
+            data_lab=data_lab-data_lab.min()
+            if right>0:
+                data_lab=data_lab[left:-right]
+            else:
+                data_lab=data_lab[left:]   
+            if len(data_set.shape) == 1:
+                data_set = np.expand_dims(data_set, -1)
+            return [data_name, data_set, data_lab, end_index_fea, end_index_lab]
+        
         cw_left_max, cw_right_max = compute_cw_max(fea_dict)
         fea_index=0
         cnt_fea=0
         data_name = None 
-        data_end_index = None 
+        data_end_index_fea_ini = None 
+        data_end_index_lab_ini = None 
         data_set = None
         labs = None
         for fea in fea_dict.keys():
@@ -339,19 +366,19 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
                 lab_dict.update({'lab_name':'none'})
             for lab in lab_dict.keys():
                 lab_folder, lab_opts = _get_lab_config_from_dict(lab_dict[lab], fea_only)
-                data_name_fea, data_set_fea, data_end_index_fea = load_chunk(fea_scp, fea_opts, lab_folder, lab_opts, cw_left, cw_right, max_seq_length, output_folder, fea_only)
-                labs_fea, data_set_fea, data_end_index_fea = _compensate_for_different_context_windows(data_set_fea, cw_left_max, cw_left, cw_right_max, cw_right, data_end_index_fea)
+                data_name_fea, data_set_fea, data_set_lab, data_end_index_fea, data_end_index_lab = _load_chunk_refac01(fea_scp, fea_opts, lab_folder, lab_opts, cw_left, cw_right, max_seq_length, output_folder, fea_only)
+                labs_fea, data_set_fea, data_end_index_fea, data_end_index_lab = _compensate_for_different_context_windows(data_set_fea, data_set_lab, cw_left_max, cw_left, cw_right_max, cw_right, data_end_index_fea, data_end_index_lab)
                 if cnt_fea == 0 and cnt_lab == 0:
-                    data_end_index = data_end_index_fea
+                    data_end_index_fea_ini = data_end_index_fea
+                    data_end_index_lab_ini = data_end_index_lab
                     data_name = data_name_fea
                 data_set, labs, fea_dict, fea_index = _update_data(data_set, labs, fea_dict, fea, fea_index, data_set_fea, labs_fea, cnt_fea, cnt_lab)
-                _check_consistency(data_name, data_name_fea, data_end_index, data_end_index_fea)
+                _check_consistency(data_name, data_name_fea, data_end_index_fea_ini, data_end_index_fea, data_end_index_lab_ini, data_end_index_lab)
                 cnt_lab=cnt_lab+1
             cnt_fea=cnt_fea+1
         if not fea_only:
             lab_dict = _update_lab_dict(lab_dict, data_set)
-        #data_set=np.column_stack((data_set,labs))
-        return data_name, data_end_index, fea_dict, lab_dict, data_set, labs
+        return data_name, data_end_index_fea_ini, data_end_index_lab_ini, fea_dict, lab_dict, data_set, labs
     def _reorder_data_set(data_set, labs, seq_model, to_do):
         if not(seq_model) and to_do != 'forward' and (data_set.shape[0] == labs.shape[0]):
             data_set_shape = data_set.shape[1]
@@ -360,21 +387,22 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
             data_set = data_set_joint[:, :data_set_shape]
             labs = np.squeeze(data_set_joint[:, data_set_shape:], axis=-1)
         return data_set, labs
-    def _append_to_shared_list(shared_list, data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set):
+    def _append_to_shared_list(shared_list, data_name, data_end_index_fea, data_end_index_lab, fea_dict, lab_dict, arch_dict, data_set):
         shared_list.append(data_name)
-        shared_list.append(data_end_index)
+        shared_list.append(data_end_index_fea)
+        shared_list.append(data_end_index_lab)
         shared_list.append(fea_dict)
         shared_list.append(lab_dict)
         shared_list.append(arch_dict)
         shared_list.append(data_set)
         return shared_list
-        
+
     config = _read_chunk_specific_config(cfg_file)
     to_do, max_seq_length, fea_dict, lab_dict, arch_dict, seq_model = _read_from_config(config, fea_only)
-    data_name, data_end_index, fea_dict, lab_dict, data_set, labs = _read_features_and_labels(fea_dict, lab_dict, max_seq_length, fea_only, output_folder)
+    data_name, data_end_index_fea, data_end_index_lab, fea_dict, lab_dict, data_set, labs = _read_features_and_labels(fea_dict, lab_dict, max_seq_length, fea_only, output_folder)
     data_set, labs = _reorder_data_set(data_set, labs, seq_model, to_do)
     data_set = {'input': data_set, 'ref': labs}
-    shared_list = _append_to_shared_list(shared_list, data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set)
+    shared_list = _append_to_shared_list(shared_list, data_name, data_end_index_fea, data_end_index_lab, fea_dict, lab_dict, arch_dict, data_set)
 
 def read_lab_fea(cfg_file,fea_only,shared_list,output_folder):
     
