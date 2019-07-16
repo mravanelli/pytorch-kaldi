@@ -192,7 +192,8 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
     if processed_first:
         shared_list = list()
         p = _read_next_chunk_into_shared_list_with_subprocess(read_lab_fea, shared_list, cfg_file, is_production, output_folder, wait_for_process=True)
-        data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set = _extract_data_from_shared_list(shared_list)
+        data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set_dict = _extract_data_from_shared_list(shared_list)
+        data_set_dict = np.column_stack((data_set_dict['input'], data_set_dict['ref']))
         data_set = _convert_numpy_to_torch(data_set, save_gpumem, use_cuda)
     shared_list = list()
     data_loading_process = _read_next_chunk_into_shared_list_with_subprocess(read_lab_fea, shared_list, next_config_file, is_production, output_folder, wait_for_process=False)
@@ -247,7 +248,8 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
     _write_info_file(info_file, to_do, loss_tot, err_tot, elapsed_time_chunk)
     if not data_loading_process is None:
         data_loading_process.join()
-    data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set = _extract_data_from_shared_list(shared_list)
+    data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set_dict = _extract_data_from_shared_list(shared_list)
+    data_set = np.column_stack((data_set_dict['input'], data_set_dict['ref']))
     data_set = _convert_numpy_to_torch(data_set, save_gpumem, use_cuda)
     return [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]
 

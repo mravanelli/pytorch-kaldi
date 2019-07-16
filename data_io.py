@@ -170,6 +170,7 @@ def load_counts(class_counts_file):
         row = next(f).strip().strip('[]').strip()
         counts = np.array([ np.float32(v) for v in row.split() ])
     return counts 
+
 def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
     def _read_chunk_specific_config(cfg_file):
         if not(os.path.exists(cfg_file)):
@@ -267,12 +268,16 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
             cnt_fea=cnt_fea+1
         if not fea_only:
             lab_dict = _update_lab_dict(lab_dict, data_set)
-        data_set=np.column_stack((data_set,labs))
-        return data_name, data_end_index, fea_dict, lab_dict, data_set
-    def _reorder_data_set(data_set, seq_model, to_do):
-        if not(seq_model) and to_do!='forward':
+        #data_set=np.column_stack((data_set,labs))
+        return data_name, data_end_index, fea_dict, lab_dict, data_set, labs
+    def _reorder_data_set(data_set, labs, seq_model, to_do):
+        if not(seq_model) and to_do != 'forward' and (data_set.shape[0] == labs.shape[0]):
+            data_set_shape = data_set.shape[1]
+            data_set_joint = np.column_stack((data_set,labs))
             np.random.shuffle(data_set)
-        return data_set
+            data_set = data_set_joint[:, :data_set_shape]
+            labs = np.squeeze(data_set_joint[:, data_set_shape:], axis=-1)
+        return data_set, labs
     def _append_to_shared_list(shared_list, data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set):
         shared_list.append(data_name)
         shared_list.append(data_end_index)
@@ -284,8 +289,9 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
         
     config = _read_chunk_specific_config(cfg_file)
     to_do, max_seq_length, fea_dict, lab_dict, arch_dict, seq_model = _read_from_config(config, fea_only)
-    data_name, data_end_index, fea_dict, lab_dict, data_set = _read_features_and_labels(fea_dict, lab_dict, max_seq_length, fea_only, output_folder)
-    data_set = _reorder_data_set(data_set, seq_model, to_do)
+    data_name, data_end_index, fea_dict, lab_dict, data_set, labs = _read_features_and_labels(fea_dict, lab_dict, max_seq_length, fea_only, output_folder)
+    data_set, labs = _reorder_data_set(data_set, labs, seq_model, to_do)
+    data_set = {'input': data_set, 'ref': labs}
     shared_list = _append_to_shared_list(shared_list, data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set)
 
 def read_lab_fea(cfg_file,fea_only,shared_list,output_folder):
