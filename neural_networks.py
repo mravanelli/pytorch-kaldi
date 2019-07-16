@@ -667,6 +667,12 @@ class logMelFb(nn.Module):
         )
     
     def forward(self, x):
+        def _safe_log(inp, epsilon=1e-20):
+            eps = torch.FloatTensor([epsilon])
+            if self._use_cuda:
+                eps = eps.cuda()
+            log_inp = torch.log10(torch.max(inp, eps.expand_as(inp)))
+            return log_inp
         assert x.shape[-1] == 1, 'Multi channel time signal processing not suppored yet'
         x_reshape_for_stft = torch.squeeze(x, -1).transpose(0, 1)
         if self._use_cuda:
@@ -682,7 +688,9 @@ class logMelFb(nn.Module):
         )
         x_power_stft = x_stft.pow(2).sum(-1)
         x_power_stft_reshape_for_filterbank_mult = x_power_stft.transpose(1, 2)
-        out = self._mspec.fm(x_power_stft_reshape_for_filterbank_mult).transpose(0, 1)
+        mel_spec = self._mspec.fm(x_power_stft_reshape_for_filterbank_mult).transpose(0, 1)
+        log_mel_spec = _safe_log(mel_spec)
+        out = log_mel_spec 
         return out
 
 class liGRU(nn.Module):
