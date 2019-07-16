@@ -170,6 +170,123 @@ def load_counts(class_counts_file):
         row = next(f).strip().strip('[]').strip()
         counts = np.array([ np.float32(v) for v in row.split() ])
     return counts 
+def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
+    def _read_chunk_specific_config(cfg_file):
+        if not(os.path.exists(cfg_file)):
+            sys.stderr.write('ERROR: The config file %s does not exist!\n'%(cfg_file))
+            sys.exit(0)
+        else:
+            config = configparser.ConfigParser()
+            config.read(cfg_file)
+        return config
+    def _read_from_config(config, fea_only):
+        to_do=config['exp']['to_do']
+        if to_do=='train':
+            max_seq_length=int(config['batches']['max_seq_length_train'])
+        if to_do=='valid':
+            max_seq_length=int(config['batches']['max_seq_length_valid'])
+        if to_do=='forward':
+            max_seq_length=-1 # do to break forward sentences
+        fea_dict, lab_dict, arch_dict = dict_fea_lab_arch(config, fea_only)
+        seq_model = is_sequential_dict(config, arch_dict)
+        return to_do, max_seq_length, fea_dict, lab_dict, arch_dict, seq_model
+    def _read_features_and_labels(fea_dict, lab_dict, max_seq_length, fea_only, output_folder):
+        def _get_fea_config_from_dict(fea_dict_entr):
+            fea_scp = fea_dict_entr[1]
+            fea_opts = fea_dict_entr[2]
+            cw_left = int(fea_dict_entr[3])
+            cw_right = int(fea_dict_entr[4])
+            return fea_scp, fea_opts, cw_left, cw_right
+        def _get_lab_config_from_dict(lab_dict_entr, fea_only):
+            if fea_only:
+                lab_folder = None 
+                lab_opts = None
+            else:
+                lab_folder = lab_dict_entr[1]
+                lab_opts = lab_dict_entr[2]
+            return lab_folder, lab_opts
+        def _compensate_for_different_context_windows(data_set_fea, cw_left_max, cw_left, cw_right_max, cw_right, data_end_index_fea):
+            labs_fea = data_set_fea[cw_left_max-cw_left:data_set_fea.shape[0]-(cw_right_max-cw_right),-1]
+            data_set_fea = data_set_fea[cw_left_max-cw_left:data_set_fea.shape[0]-(cw_right_max-cw_right),0:-1]
+            data_end_index_fea = data_end_index_fea-(cw_left_max-cw_left)
+            data_end_index_fea[-1] = data_end_index_fea[-1]-(cw_right_max-cw_right)
+            return labs_fea, data_set_fea, data_end_index_fea
+        def _update_data(data_set, labs, fea_dict, fea, fea_index, data_set_fea, labs_fea, cnt_fea, cnt_lab):
+            if cnt_fea==0 and cnt_lab==0:
+                data_set=data_set_fea
+                labs=labs_fea
+                fea_dict[fea].append(fea_index)
+                fea_index=fea_index+data_set_fea.shape[1]
+                fea_dict[fea].append(fea_index)
+                fea_dict[fea].append(fea_dict[fea][6]-fea_dict[fea][5])
+            elif cnt_fea==0 and (not cnt_fea==0):
+                labs=np.column_stack((labs,labs_fea))
+            elif (not cnt_fea==0) and cnt_fea==0:
+                data_set=np.column_stack((data_set,data_set_fea))
+                fea_dict[fea].append(fea_index)
+                fea_index=fea_index+data_set_fea.shape[1]
+                fea_dict[fea].append(fea_index)
+                fea_dict[fea].append(fea_dict[fea][6]-fea_dict[fea][5])
+            return data_set, labs, fea_dict, fea_index
+        def _check_consistency(data_name, data_name_fea, data_end_index, data_end_index_fea):
+            if not (data_name == data_name_fea):
+                sys.stderr.write('ERROR: different sentence ids are detected for the different features. Plase check again input feature lists"\n')
+                sys.exit(0)
+            if not (data_end_index == data_end_index_fea).all():
+                sys.stderr.write('ERROR end_index must be the same for all the sentences"\n')
+                sys.exit(0)
+        def _update_lab_dict(lab_dict, data_set):
+            cnt_lab=0
+            for lab in lab_dict.keys():
+                lab_dict[lab].append(data_set.shape[1]+cnt_lab)
+                cnt_lab=cnt_lab+1
+            return lab_dict
+            
+        cw_left_max, cw_right_max = compute_cw_max(fea_dict)
+        fea_index=0
+        cnt_fea=0
+        data_name = None 
+        data_end_index = None 
+        data_set = None
+        labs = None
+        for fea in fea_dict.keys():
+            fea_scp, fea_opts, cw_left, cw_right = _get_fea_config_from_dict(fea_dict[fea])
+            cnt_lab=0
+            if fea_only:
+                lab_dict.update({'lab_name':'none'})
+            for lab in lab_dict.keys():
+                lab_folder, lab_opts = _get_lab_config_from_dict(lab_dict[lab], fea_only)
+                data_name_fea, data_set_fea, data_end_index_fea = load_chunk(fea_scp, fea_opts, lab_folder, lab_opts, cw_left, cw_right, max_seq_length, output_folder, fea_only)
+                labs_fea, data_set_fea, data_end_index_fea = _compensate_for_different_context_windows(data_set_fea, cw_left_max, cw_left, cw_right_max, cw_right, data_end_index_fea)
+                if cnt_fea == 0 and cnt_lab == 0:
+                    data_end_index = data_end_index_fea
+                    data_name = data_name_fea
+                data_set, labs, fea_dict, fea_index = _update_data(data_set, labs, fea_dict, fea, fea_index, data_set_fea, labs_fea, cnt_fea, cnt_lab)
+                _check_consistency(data_name, data_name_fea, data_end_index, data_end_index_fea)
+                cnt_lab=cnt_lab+1
+            cnt_fea=cnt_fea+1
+        if not fea_only:
+            lab_dict = _update_lab_dict(lab_dict, data_set)
+        data_set=np.column_stack((data_set,labs))
+        return data_name, data_end_index, fea_dict, lab_dict, data_set
+    def _reorder_data_set(data_set, seq_model, to_do):
+        if not(seq_model) and to_do!='forward':
+            np.random.shuffle(data_set)
+        return data_set
+    def _append_to_shared_list(shared_list, data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set):
+        shared_list.append(data_name)
+        shared_list.append(data_end_index)
+        shared_list.append(fea_dict)
+        shared_list.append(lab_dict)
+        shared_list.append(arch_dict)
+        shared_list.append(data_set)
+        return shared_list
+        
+    config = _read_chunk_specific_config(cfg_file)
+    to_do, max_seq_length, fea_dict, lab_dict, arch_dict, seq_model = _read_from_config(config, fea_only)
+    data_name, data_end_index, fea_dict, lab_dict, data_set = _read_features_and_labels(fea_dict, lab_dict, max_seq_length, fea_only, output_folder)
+    data_set = _reorder_data_set(data_set, seq_model, to_do)
+    shared_list = _append_to_shared_list(shared_list, data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set)
 
 def read_lab_fea(cfg_file,fea_only,shared_list,output_folder):
     

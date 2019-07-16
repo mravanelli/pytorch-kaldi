@@ -170,6 +170,7 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
                  out_file=info_file.replace('.info','_'+arch_dict[net][0]+'.pkl')
                  torch.save(checkpoint, out_file)
     
+    from data_io import read_lab_fea_refac01 as read_lab_fea
     config = _read_chunk_specific_config(cfg_file)
     _initialize_random_seed(config)
     
