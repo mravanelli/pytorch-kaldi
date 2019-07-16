@@ -1792,7 +1792,7 @@ def optimizer_init(nns,config,arch_dict):
     return optimizers
 
 
-def forward_model_refac01(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs):
+def forward_model_refac01(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,ref,inp_out_dict,max_len,batch_size,to_do,forward_outs):
     def _add_input_features_to_outs_dict(fea_dict, outs_dict, inp):
         for fea in fea_dict.keys():
             if len(inp.shape)==3 and len(fea_dict[fea])>1:
@@ -1842,6 +1842,7 @@ def forward_model_refac01(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_ou
             out=out.view(max_len*batch_size,-1)
         return out
 
+    inp = torch.cat((inp, ref), -1)
     outs_dict={}
     _add_input_features_to_outs_dict(fea_dict, outs_dict, inp)
     layer_string_pattern='(.*)=(.*)\((.*),(.*)\)'

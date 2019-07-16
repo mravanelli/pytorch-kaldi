@@ -59,12 +59,15 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
         torch.manual_seed(seed)
         random.seed(seed)
         np.random.seed(seed)
-    def _convert_numpy_to_torch(data_set, save_gpumem, use_cuda):
+    def _convert_numpy_to_torch(data_set_dict, save_gpumem, use_cuda):
         if not(save_gpumem) and use_cuda:
-            data_set=torch.from_numpy(data_set).float().cuda()
+            data_set_inp=torch.from_numpy(data_set_dict['input']).float().cuda()
+            data_set_ref=torch.from_numpy(data_set_dict['ref']).float().cuda()
         else:
-            data_set=torch.from_numpy(data_set).float()
-        return data_set
+            data_set_inp=torch.from_numpy(data_set_dict['input']).float()
+            data_set_ref=torch.from_numpy(data_set_dict['ref']).float()
+        data_set_ref = data_set_ref.view((data_set_ref.shape[0], 1))
+        return data_set_inp, data_set_ref
     def _load_model_and_optimizer(fea_dict,model,config,arch_dict,use_cuda,multi_gpu,to_do):
         inp_out_dict = fea_dict
         nns, costs = model_init(inp_out_dict,model,config,arch_dict,use_cuda,multi_gpu,to_do)
@@ -91,7 +94,7 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
                 out_file=info_file.replace('.info','_'+forward_outs[out_id]+'.ark')
             post_file[forward_outs[out_id]]=open_or_fd(out_file,output_folder,'wb')
         return post_file
-    def _get_batch_config(data_set, seq_model, to_do, data_name, batch_size):
+    def _get_batch_config(data_set_input, seq_model, to_do, data_name, batch_size):
         N_snt = None
         N_ex_tr = None
         N_batches = None
@@ -99,21 +102,25 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
             N_snt=len(data_name)
             N_batches=int(N_snt/batch_size)
         else:
-            N_ex_tr=data_set.shape[0]
+            N_ex_tr=data_set_input.shape[0]
             N_batches=int(N_ex_tr/batch_size)
         return N_snt, N_ex_tr, N_batches
-    def _prepare_input(snt_index, batch_size, inp_dim, beg_snt, data_end_index, beg_batch, end_batch, seq_model, arr_snt_len, data_set, use_cuda):
+    def _prepare_input(snt_index, batch_size, inp_dim, ref_dim, beg_snt, data_end_index, beg_batch, end_batch, seq_model, arr_snt_len, data_set_inp, data_set_ref, use_cuda):
+        if len(data_set_ref.shape) == 1:
+            data_set_ref = data_set_ref.shape.view((data_set_ref.shape[0], 1))
         max_len=0
         if seq_model:
             max_len = int(max(arr_snt_len[snt_index:snt_index+batch_size]))  
             inp = torch.zeros(max_len,batch_size,inp_dim).contiguous()
+            ref = torch.zeros(max_len,batch_size,ref_dim).contiguous()
             for k in range(batch_size):
                 snt_len = data_end_index[snt_index]-beg_snt
                 N_zeros = max_len-snt_len
                 # Appending a random number of initial zeros, tge others are at the end. 
                 N_zeros_left = random.randint(0,N_zeros)
                 # randomizing could have a regularization effect
-                inp[N_zeros_left:N_zeros_left+snt_len,k,:] = data_set[beg_snt:beg_snt+snt_len,:]
+                inp[N_zeros_left:N_zeros_left+snt_len,k,:] = data_set_inp[beg_snt:beg_snt+snt_len,:]
+                ref[N_zeros_left:N_zeros_left+snt_len,k,:] = data_set_ref[beg_snt:beg_snt+snt_len,:]
                 beg_snt = data_end_index[snt_index]
                 snt_index = snt_index+1
         else:
@@ -121,12 +128,14 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
                 inp = data_set[beg_batch:end_batch,:].contiguous()
             else:
                 snt_len = data_end_index[snt_index]-beg_snt
-                inp = data_set[beg_snt:beg_snt+snt_len,:].contiguous()
+                inp = data_set_inp[beg_snt:beg_snt+snt_len,:].contiguous()
+                ref = data_set_ref[beg_snt:beg_snt+snt_len,:].contiguous()
                 beg_snt = data_end_index[snt_index]
                 snt_index = snt_index+1
         if use_cuda:
             inp=inp.cuda()
-        return inp, max_len, snt_len, beg_snt, snt_index
+            ref=ref.cuda()
+        return inp, ref, max_len, snt_len, beg_snt, snt_index
     def _forward_data_through_network(dry_run, fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs):
         if not dry_run:
             outs_dict = forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
@@ -169,6 +178,12 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
                  checkpoint['optimizer_par']=optimizers[net].state_dict()
                  out_file=info_file.replace('.info','_'+arch_dict[net][0]+'.pkl')
                  torch.save(checkpoint, out_file)
+    def _get_dim_from_data_set(data_set_inp, data_set_ref):
+        inp_dim = data_set_inp.shape[1]
+        ref_dim = 1
+        if len(data_set_ref.shape) > 1:
+            ref_dim = data_set_ref.shape[1]
+        return inp_dim, ref_dim
     
     from data_io import read_lab_fea_refac01 as read_lab_fea
     from utils import forward_model_refac01 as forward_model
@@ -193,8 +208,10 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
         shared_list = list()
         p = _read_next_chunk_into_shared_list_with_subprocess(read_lab_fea, shared_list, cfg_file, is_production, output_folder, wait_for_process=True)
         data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set_dict = _extract_data_from_shared_list(shared_list)
-        data_set_dict = np.column_stack((data_set_dict['input'], data_set_dict['ref']))
-        data_set = _convert_numpy_to_torch(data_set, save_gpumem, use_cuda)
+        data_set_inp, data_set_ref = _convert_numpy_to_torch(data_set_dict, save_gpumem, use_cuda)
+    else:
+        data_set_inp = data_set['input']
+        data_set_ref = data_set['ref']
     shared_list = list()
     data_loading_process = _read_next_chunk_into_shared_list_with_subprocess(read_lab_fea, shared_list, next_config_file, is_production, output_folder, wait_for_process=False)
     nns, costs, optimizers, inp_out_dict = _load_model_and_optimizer(fea_dict,model,config,arch_dict,use_cuda,multi_gpu,to_do)
@@ -202,28 +219,29 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
         post_file = _open_forward_output_files_and_get_file_handles(forward_outs, require_decodings, info_file, output_folder)
     
     seq_model = is_sequential_dict(config,arch_dict)
-    N_snt, N_ex_tr, N_batches = _get_batch_config(data_set, seq_model, to_do, data_name, batch_size) 
+    N_snt, N_ex_tr, N_batches = _get_batch_config(data_set_inp, seq_model, to_do, data_name, batch_size) 
     beg_batch = 0
     end_batch = batch_size 
     snt_index = 0
     beg_snt = 0 
     arr_snt_len = shift(shift(data_end_index, -1,0)-data_end_index,1,0)
     arr_snt_len[0] = data_end_index[0]
-    inp_dim = data_set.shape[1]
+    data_set_inp_dim, data_set_ref_dim = _get_dim_from_data_set(data_set_inp, data_set_ref)
+    inp_dim = data_set_inp_dim + data_set_ref_dim
     loss_sum = 0
     err_sum = 0
     start_time = time.time()
     for i in range(N_batches):
-        inp, max_len, snt_len, beg_snt, snt_index = _prepare_input(snt_index, batch_size, inp_dim, beg_snt, data_end_index, beg_batch, end_batch, seq_model, arr_snt_len, data_set, use_cuda)
+        inp, ref, max_len, snt_len, beg_snt, snt_index = _prepare_input(snt_index, batch_size, data_set_inp_dim, data_set_ref_dim, beg_snt, data_end_index, beg_batch, end_batch, seq_model, arr_snt_len, data_set_inp, data_set_ref, use_cuda)
         if dry_run:
             outs_dict = dict()
         else:
             if to_do=='train':
-                outs_dict = forward_model(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, inp_out_dict, max_len, batch_size, to_do, forward_outs)
+                outs_dict = forward_model(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len, batch_size, to_do, forward_outs)
                 _optimization_step(optimizers, outs_dict, config, arch_dict)
             else:
                 with torch.no_grad():
-                    outs_dict = forward_model(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, inp_out_dict, max_len, batch_size, to_do, forward_outs)
+                    outs_dict = forward_model(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len, batch_size, to_do, forward_outs)
             if to_do == 'forward':
                 for out_id in range(len(forward_outs)):
                     out_save = outs_dict[forward_outs[out_id]].data.cpu().numpy()
@@ -240,7 +258,7 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
     elapsed_time_chunk=time.time() - start_time 
     loss_tot=loss_sum/N_batches
     err_tot=err_sum/N_batches
-    del inp, outs_dict, data_set
+    del inp, ref, outs_dict, data_set_inp_dim, data_set_ref_dim
     _save_model(to_do, nns, multi_gpu, optimizers, info_file, arch_dict)
     if to_do=='forward':
         for out_name in forward_outs:
@@ -249,8 +267,8 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
     if not data_loading_process is None:
         data_loading_process.join()
     data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set_dict = _extract_data_from_shared_list(shared_list)
-    data_set = np.column_stack((data_set_dict['input'], data_set_dict['ref']))
-    data_set = _convert_numpy_to_torch(data_set, save_gpumem, use_cuda)
+    data_set_inp, data_set_ref = _convert_numpy_to_torch(data_set_dict, save_gpumem, use_cuda)
+    data_set = {'input': data_set_inp, 'ref': data_set_ref}
     return [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]
 
 def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_file,processed_first,next_config_file,dry_run=False):
