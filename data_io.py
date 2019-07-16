@@ -247,11 +247,27 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
             config.read(cfg_file)
         return config
     def _read_from_config(config, fea_only):
+        def _get_max_seq_length_from_config_str(config_str):
+            max_seq_length=[int(e) for e in config_str.split(',')]
+            if len(max_seq_length) == 1:
+                max_seq_length = max_seq_length[0]
+            else:
+                assert len(max_seq_length) == 6
+                max_seq_length_list = max_seq_length
+                max_seq_length = dict()
+                max_seq_length['chunk_size_fea'] = max_seq_length_list[0]
+                max_seq_length['chunk_step_fea'] = max_seq_length_list[1]
+                max_seq_length['chunk_size_lab'] = max_seq_length_list[2]
+                max_seq_length['chunk_step_lab'] = max_seq_length_list[3]
+                max_seq_length['window_shift'] = max_seq_length_list[4]
+                max_seq_length['window_size'] = max_seq_length_list[5]
+            return max_seq_length
+        
         to_do=config['exp']['to_do']
         if to_do=='train':
-            max_seq_length=int(config['batches']['max_seq_length_train'])
+            max_seq_length=_get_max_seq_length_from_config_str(config['batches']['max_seq_length_train'])
         if to_do=='valid':
-            max_seq_length=int(config['batches']['max_seq_length_valid'])
+            max_seq_length=_get_max_seq_length_from_config_str(config['batches']['max_seq_length_valid'])
         if to_do=='forward':
             max_seq_length=-1 # do to break forward sentences
         fea_dict, lab_dict, arch_dict = dict_fea_lab_arch(config, fea_only)
