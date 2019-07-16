@@ -39,13 +39,14 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
         else:
             return p
     def _extract_data_from_shared_list(shared_list):
-        data_name=shared_list[0]
-        data_end_index=shared_list[1]
-        fea_dict=shared_list[2]
-        lab_dict=shared_list[3]
-        arch_dict=shared_list[4]
-        data_set=shared_list[5]
-        return data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set
+        data_name = shared_list[0]
+        data_end_index_fea = shared_list[1]
+        data_end_index_lab = shared_list[2]
+        fea_dict = shared_list[3]
+        lab_dict = shared_list[4]
+        arch_dict = shared_list[5]
+        data_set = shared_list[6]
+        return data_name, data_end_index_fea, data_end_index_lab, fea_dict, lab_dict, arch_dict, data_set
     def _get_batch_size_from_config(config, to_do):
         if to_do=='train':
             batch_size=int(config['batches']['batch_size_train'])
@@ -105,43 +106,53 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
             N_ex_tr=data_set_input.shape[0]
             N_batches=int(N_ex_tr/batch_size)
         return N_snt, N_ex_tr, N_batches
-    def _prepare_input(snt_index, batch_size, inp_dim, ref_dim, beg_snt, data_end_index, beg_batch, end_batch, seq_model, arr_snt_len, data_set_inp, data_set_ref, use_cuda):
+    def _prepare_input(snt_index, batch_size, inp_dim, ref_dim, beg_snt_fea, beg_snt_lab, data_end_index_fea, data_end_index_lab, beg_batch, end_batch, seq_model, arr_snt_len_fea, arr_snt_len_lab, data_set_inp, data_set_ref, use_cuda):
+        def _zero_padding(inp, ref, max_len_fea, max_len_lab, data_end_index_fea, data_end_index_lab, data_set_inp, data_set_ref, beg_snt_fea, beg_snt_lab, snt_index, k):
+            def _input_and_ref_have_same_time_dimension(N_zeros_fea, N_zeros_lab):
+                if N_zeros_fea == N_zeros_lab:
+                    return True
+                return False
+            snt_len_fea = data_end_index_fea[snt_index] - beg_snt_fea
+            snt_len_lab = data_end_index_lab[snt_index] - beg_snt_lab
+            N_zeros_fea = max_len_fea - snt_len_fea
+            N_zeros_lab = max_len_lab - snt_len_lab
+            if _input_and_ref_have_same_time_dimension(N_zeros_fea, N_zeros_lab):
+                N_zeros_fea_left = random.randint(0,N_zeros_fea)
+                N_zeros_lab_left = N_zeros_fea_left
+            else:
+                N_zeros_fea_left = 0 
+                N_zeros_lab_left = 0 
+            inp[N_zeros_fea_left:N_zeros_fea_left+snt_len_fea,k,:] = data_set_inp[beg_snt_fea:beg_snt_fea+snt_len_fea,:]
+            ref[N_zeros_lab_left:N_zeros_lab_left+snt_len_lab,k,:] = data_set_ref[beg_snt_lab:beg_snt_lab+snt_len_lab,:]
+            return inp, ref, snt_len_fea, snt_len_lab
         if len(data_set_ref.shape) == 1:
             data_set_ref = data_set_ref.shape.view((data_set_ref.shape[0], 1))
         max_len=0
         if seq_model:
-            max_len = int(max(arr_snt_len[snt_index:snt_index+batch_size]))  
-            inp = torch.zeros(max_len,batch_size,inp_dim).contiguous()
-            ref = torch.zeros(max_len,batch_size,ref_dim).contiguous()
+            max_len_fea = int(max(arr_snt_len_fea[snt_index:snt_index+batch_size]))  
+            max_len_lab = int(max(arr_snt_len_lab[snt_index:snt_index+batch_size]))  
+            inp = torch.zeros(max_len_fea,batch_size,inp_dim).contiguous()
+            ref = torch.zeros(max_len_lab,batch_size,ref_dim).contiguous()
             for k in range(batch_size):
-                snt_len = data_end_index[snt_index]-beg_snt
-                N_zeros = max_len-snt_len
-                # Appending a random number of initial zeros, tge others are at the end. 
-                N_zeros_left = random.randint(0,N_zeros)
-                # randomizing could have a regularization effect
-                inp[N_zeros_left:N_zeros_left+snt_len,k,:] = data_set_inp[beg_snt:beg_snt+snt_len,:]
-                ref[N_zeros_left:N_zeros_left+snt_len,k,:] = data_set_ref[beg_snt:beg_snt+snt_len,:]
-                beg_snt = data_end_index[snt_index]
-                snt_index = snt_index+1
+                inp, ref, snt_len_fea, snt_len_lab = _zero_padding(inp, ref, max_len_fea, max_len_lab, data_end_index_fea, data_end_index_lab, data_set_inp, data_set_ref, beg_snt_fea, beg_snt_lab, snt_index, k)
+                beg_snt_fea = data_end_index_fea[snt_index]
+                beg_snt_lab = data_end_index_lab[snt_index]
+                snt_index = snt_index + 1
         else:
             if to_do != 'forward':
                 inp = data_set[beg_batch:end_batch,:].contiguous()
             else:
-                snt_len = data_end_index[snt_index]-beg_snt
-                inp = data_set_inp[beg_snt:beg_snt+snt_len,:].contiguous()
-                ref = data_set_ref[beg_snt:beg_snt+snt_len,:].contiguous()
-                beg_snt = data_end_index[snt_index]
-                snt_index = snt_index+1
+                snt_len_fea = data_end_index_fea[snt_index] - beg_snt_fea
+                snt_len_lab = data_end_index_lab[snt_index] - beg_snt_lab
+                inp = data_set_inp[beg_snt_fea:beg_snt_fea+snt_len_fea,:].contiguous()
+                ref = data_set_ref[beg_snt_lab:beg_snt_lab+snt_len_lab,:].contiguous()
+                beg_snt_fea = data_end_index_fea[snt_index]
+                beg_snt_lab = data_end_index_lab[snt_index]
+                snt_index = snt_index + 1
         if use_cuda:
             inp=inp.cuda()
             ref=ref.cuda()
-        return inp, ref, max_len, snt_len, beg_snt, snt_index
-    def _forward_data_through_network(dry_run, fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs):
-        if not dry_run:
-            outs_dict = forward_model(fea_dict,lab_dict,arch_dict,model,nns,costs,inp,inp_out_dict,max_len,batch_size,to_do,forward_outs)
-        else:
-            outs_dict = dict()
-        return outs_dict
+        return inp, ref, max_len_fea, max_len_lab, snt_len_fea, snt_len_lab, beg_snt_fea, beg_snt_lab, snt_index
     def _optimization_step(optimizers, outs_dict, config, arch_dict):
         for opt in optimizers.keys():
             optimizers[opt].zero_grad()
@@ -207,11 +218,13 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
     if processed_first:
         shared_list = list()
         p = _read_next_chunk_into_shared_list_with_subprocess(read_lab_fea, shared_list, cfg_file, is_production, output_folder, wait_for_process=True)
-        data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set_dict = _extract_data_from_shared_list(shared_list)
+        data_name, data_end_index_fea, data_end_index_lab, fea_dict, lab_dict, arch_dict, data_set_dict = _extract_data_from_shared_list(shared_list)
         data_set_inp, data_set_ref = _convert_numpy_to_torch(data_set_dict, save_gpumem, use_cuda)
     else:
         data_set_inp = data_set['input']
         data_set_ref = data_set['ref']
+        data_end_index_fea = data_end_index['fea']
+        data_end_index_lab = data_end_index['lab']
     shared_list = list()
     data_loading_process = _read_next_chunk_into_shared_list_with_subprocess(read_lab_fea, shared_list, next_config_file, is_production, output_folder, wait_for_process=False)
     nns, costs, optimizers, inp_out_dict = _load_model_and_optimizer(fea_dict,model,config,arch_dict,use_cuda,multi_gpu,to_do)
@@ -223,25 +236,28 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
     beg_batch = 0
     end_batch = batch_size 
     snt_index = 0
-    beg_snt = 0 
-    arr_snt_len = shift(shift(data_end_index, -1,0)-data_end_index,1,0)
-    arr_snt_len[0] = data_end_index[0]
+    beg_snt_fea = 0 
+    beg_snt_lab = 0 
+    arr_snt_len_fea = shift(shift(data_end_index_fea, -1,0) - data_end_index_fea,1,0)
+    arr_snt_len_lab = shift(shift(data_end_index_lab, -1,0) - data_end_index_lab,1,0)
+    arr_snt_len_fea[0] = data_end_index_fea[0]
+    arr_snt_len_lab[0] = data_end_index_lab[0]
     data_set_inp_dim, data_set_ref_dim = _get_dim_from_data_set(data_set_inp, data_set_ref)
     inp_dim = data_set_inp_dim + data_set_ref_dim
     loss_sum = 0
     err_sum = 0
     start_time = time.time()
     for i in range(N_batches):
-        inp, ref, max_len, snt_len, beg_snt, snt_index = _prepare_input(snt_index, batch_size, data_set_inp_dim, data_set_ref_dim, beg_snt, data_end_index, beg_batch, end_batch, seq_model, arr_snt_len, data_set_inp, data_set_ref, use_cuda)
+        inp, ref, max_len_fea, max_len_lab, snt_len_fea, snt_len_lab, beg_snt_fea, beg_snt_lab, snt_index = _prepare_input(snt_index, batch_size, data_set_inp_dim, data_set_ref_dim, beg_snt_fea, beg_snt_lab, data_end_index_fea, data_end_index_lab, beg_batch, end_batch, seq_model, arr_snt_len_fea, arr_snt_len_lab, data_set_inp, data_set_ref, use_cuda)
         if dry_run:
             outs_dict = dict()
         else:
             if to_do=='train':
-                outs_dict = forward_model(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len, batch_size, to_do, forward_outs)
+                outs_dict = forward_model(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len_fea, max_len_lab, batch_size, to_do, forward_outs)
                 _optimization_step(optimizers, outs_dict, config, arch_dict)
             else:
                 with torch.no_grad():
-                    outs_dict = forward_model(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len, batch_size, to_do, forward_outs)
+                    outs_dict = forward_model(fea_dict, lab_dict, arch_dict, model, nns, costs, inp, ref, inp_out_dict, max_len_fea, max_len_lab, batch_size, to_do, forward_outs)
             if to_do == 'forward':
                 for out_id in range(len(forward_outs)):
                     out_save = outs_dict[forward_outs[out_id]].data.cpu().numpy()
@@ -266,9 +282,10 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
     _write_info_file(info_file, to_do, loss_tot, err_tot, elapsed_time_chunk)
     if not data_loading_process is None:
         data_loading_process.join()
-    data_name, data_end_index, fea_dict, lab_dict, arch_dict, data_set_dict = _extract_data_from_shared_list(shared_list)
+    data_name, data_end_index_fea, data_end_index_lab, fea_dict, lab_dict, arch_dict, data_set_dict = _extract_data_from_shared_list(shared_list)
     data_set_inp, data_set_ref = _convert_numpy_to_torch(data_set_dict, save_gpumem, use_cuda)
     data_set = {'input': data_set_inp, 'ref': data_set_ref}
+    data_end_index = {'fea': data_end_index_fea,'lab': data_end_index_lab}
     return [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]
 
 def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_file,processed_first,next_config_file,dry_run=False):
