@@ -648,6 +648,25 @@ class GRU(nn.Module):
               
         return x
 
+class logMelFb(nn.Module):
+    def __init__(self, options,inp_dim):
+        super(logMelFb, self).__init__()
+        self._nr_of_filters = int(options['logmelfb_nr_filt'])
+        self._stft_window_size = int(options['logmelfb_stft_window_size'])
+        self._stft_window_shift = int(options['logmelfb_stft_window_shift'])
+        self._use_cuda = strtobool(options['use_cuda'])
+        self.out_dim = self._nr_of_filters
+    
+    def forward(self, x):
+        nr_of_frames = int((x.shape[0] - self._stft_window_size) / float(self._stft_window_shift) + 1)
+        out = torch.zeros(nr_of_frames, x.shape[1], self.out_dim).contiguous()
+        for frame in range(nr_of_frames):
+            frame_start = frame * self._stft_window_shift
+            frame_end = frame_start + self._stft_window_size
+            out[frame, :, :] = x[frame_start:frame_start + self.out_dim, :, :].squeeze(-1).transpose(0, 1)
+        if self._use_cuda:
+            out=out.cuda()
+        return out
 
 class liGRU(nn.Module):
     
