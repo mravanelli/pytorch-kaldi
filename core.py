@@ -81,8 +81,9 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
                 else:
                     checkpoint_load = torch.load(pt_file_arch, map_location='cpu')
                 nns[net].load_state_dict(checkpoint_load['model_par'])
-                optimizers[net].load_state_dict(checkpoint_load['optimizer_par'])
-                optimizers[net].param_groups[0]['lr']=float(config[arch_dict[net][0]]['arch_lr']) # loading lr of the cfg file for pt
+                if net in optimizers:
+                    optimizers[net].load_state_dict(checkpoint_load['optimizer_par'])
+                    optimizers[net].param_groups[0]['lr']=float(config[arch_dict[net][0]]['arch_lr']) # loading lr of the cfg file for pt
             if multi_gpu:
                 nns[net] = torch.nn.DataParallel(nns[net])
         return nns, costs, optimizers, inp_out_dict
@@ -186,7 +187,10 @@ def run_nn_refac01(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict
                      checkpoint['model_par']=nns[net].module.state_dict()
                  else:
                      checkpoint['model_par']=nns[net].state_dict()
-                 checkpoint['optimizer_par']=optimizers[net].state_dict()
+                 if net in optimizers:
+                     checkpoint['optimizer_par']=optimizers[net].state_dict()
+                 else:
+                     checkpoint['optimizer_par']=dict()
                  out_file=info_file.replace('.info','_'+arch_dict[net][0]+'.pkl')
                  torch.save(checkpoint, out_file)
     def _get_dim_from_data_set(data_set_inp, data_set_ref):
