@@ -17,7 +17,9 @@ import numpy as np
 from utils import check_cfg,create_lists,create_configs, compute_avg_performance, \
                   read_args_command_line, run_shell,compute_n_chunks, get_all_archs,cfg_item2sec, \
                   dump_epoch_results, create_curves,change_lr_cfg,expand_str_ep
+from data_io import read_lab_fea_refac01 as read_lab_fea
 from shutil import copyfile
+from core import read_next_chunk_into_shared_list_with_subprocess, extract_data_from_shared_list, convert_numpy_to_torch
 import re
 from distutils.util import strtobool
 import importlib
@@ -340,7 +342,16 @@ for forward_data in forward_data_lst:
 
                 # run chunk processing                    
                 if _run_forwarding_in_subprocesses(config):
-                    p = multiprocessing.Process(target=run_nn, kwargs={'data_name': None, 'data_set': None, 'data_end_index': None, 'fea_dict': None, 'lab_dict': None, 'arch_dict': None, 'cfg_file': config_chunk_file, 'processed_first': True, 'next_config_file': None})
+                    shared_list = list()
+                    output_folder = config['exp']['out_folder']
+                    save_gpumem = strtobool(config['exp']['save_gpumem'])
+                    use_cuda=strtobool(config['exp']['use_cuda'])
+                    p = read_next_chunk_into_shared_list_with_subprocess(read_lab_fea, shared_list, config_chunk_file, is_production, output_folder, wait_for_process=True)
+                    data_name, data_end_index_fea, data_end_index_lab, fea_dict, lab_dict, arch_dict, data_set_dict = extract_data_from_shared_list(shared_list)
+                    data_set_inp, data_set_ref = convert_numpy_to_torch(data_set_dict, save_gpumem, use_cuda)
+                    data_set = {'input': data_set_inp, 'ref': data_set_ref}
+                    data_end_index = {'fea': data_end_index_fea,'lab': data_end_index_lab}
+                    p = multiprocessing.Process(target=run_nn, kwargs={'data_name': data_name, 'data_set': data_set, 'data_end_index': data_end_index, 'fea_dict': fea_dict, 'lab_dict': lab_dict, 'arch_dict': arch_dict, 'cfg_file': config_chunk_file, 'processed_first': False, 'next_config_file': None})
                     processes.append(p)
                     p.start()
                 else:
