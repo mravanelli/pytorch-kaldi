@@ -24,6 +24,13 @@ import importlib
 import math
 import multiprocessing
 
+def _run_forwarding_in_subprocesses(config):
+    use_cuda=strtobool(config['exp']['use_cuda'])
+    if use_cuda:
+        return False
+    else:
+        return True
+
 # Reading global cfg file (first argument-mandatory file) 
 cfg_file=sys.argv[1]
 if not(os.path.exists(cfg_file)):
@@ -309,7 +316,8 @@ for forward_data in forward_data_lst:
          N_ck_forward=compute_n_chunks(out_folder,forward_data,ep,N_ep_str_format,'forward')
          N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_forward)),1))+'d'
          
-         kwargs_list = list()
+         processes = list()
+         info_files = list()
          for ck in range(N_ck_forward):
             
             if not is_production:
@@ -331,36 +339,29 @@ for forward_data in forward_data_lst:
                 next_config_file=cfg_file_list[op_counter]
 
                 # run chunk processing                    
-                #[data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
-                kwargs = dict()
-                for e in ['data_name','data_set','data_end_index','fea_dict','lab_dict','arch_dict','config_chunk_file','processed_first','next_config_file']:
-                    if e == "config_chunk_file":
-                        kwargs['cfg_file'] = eval(e)
-                    else:
-                        kwargs[e] = eval(e)
-                kwargs_list.append(kwargs)
-                [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file,dry_run=True)
+                if _run_forwarding_in_subprocesses(config):
+                    p = multiprocessing.Process(target=run_nn, kwargs={'data_name': None, 'data_set': None, 'data_end_index': None, 'fea_dict': None, 'lab_dict': None, 'arch_dict': None, 'cfg_file': config_chunk_file, 'processed_first': True, 'next_config_file': None})
+                    processes.append(p)
+                    p.start()
+                else:
+                    [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
+                    processed_first=False
+                    if not(os.path.exists(info_file)):
+                        sys.stderr.write("ERROR: forward chunk %i of dataset %s not done! File %s does not exist.\nSee %s \n" % (ck,forward_data,info_file,log_file))
+                        sys.exit(0)
                 
-                
-                # update the first_processed variable
-                processed_first=False
-            
-                if not(os.path.exists(info_file)):
-                    sys.stderr.write("ERROR: forward chunk %i of dataset %s not done! File %s does not exist.\nSee %s \n" % (ck,forward_data,info_file,log_file))
-                    sys.exit(0)
-            
+                info_files.append(info_file)
             
             # update the operation counter
             op_counter+=1
-         processes = list()
-         for kwargs in kwargs_list:
-             p = multiprocessing.Process(target=run_nn, kwargs=kwargs)
-             processes.append(p)
-             p.start()
-         for process in processes:
-             process.join()
-            
-                    
+         if _run_forwarding_in_subprocesses(config):
+             for process in processes:
+                 process.join()
+             for info_file in info_files:
+                 if not(os.path.exists(info_file)):
+                     sys.stderr.write("ERROR: File %s does not exist. Forwarding did not suceed.\nSee %s \n" % (info_file,log_file))
+                     sys.exit(0)
+                 
                
             
 # --------DECODING--------#
