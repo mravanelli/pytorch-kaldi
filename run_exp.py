@@ -17,12 +17,21 @@ import numpy as np
 from utils import check_cfg,create_lists,create_configs, compute_avg_performance, \
                   read_args_command_line, run_shell,compute_n_chunks, get_all_archs,cfg_item2sec, \
                   dump_epoch_results, create_curves,change_lr_cfg,expand_str_ep
+from data_io import read_lab_fea_refac01 as read_lab_fea
 from shutil import copyfile
+from core import read_next_chunk_into_shared_list_with_subprocess, extract_data_from_shared_list, convert_numpy_to_torch
 import re
 from distutils.util import strtobool
 import importlib
 import math
 import multiprocessing
+
+def _run_forwarding_in_subprocesses(config):
+    use_cuda=strtobool(config['exp']['use_cuda'])
+    if use_cuda:
+        return False
+    else:
+        return True
 
 # Reading global cfg file (first argument-mandatory file) 
 cfg_file=sys.argv[1]
@@ -309,7 +318,8 @@ for forward_data in forward_data_lst:
          N_ck_forward=compute_n_chunks(out_folder,forward_data,ep,N_ep_str_format,'forward')
          N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_forward)),1))+'d'
          
-         kwargs_list = list()
+         processes = list()
+         info_files = list()
          for ck in range(N_ck_forward):
             
             if not is_production:
@@ -331,36 +341,38 @@ for forward_data in forward_data_lst:
                 next_config_file=cfg_file_list[op_counter]
 
                 # run chunk processing                    
-                #[data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
-                kwargs = dict()
-                for e in ['data_name','data_set','data_end_index','fea_dict','lab_dict','arch_dict','config_chunk_file','processed_first','next_config_file']:
-                    if e == "config_chunk_file":
-                        kwargs['cfg_file'] = eval(e)
-                    else:
-                        kwargs[e] = eval(e)
-                kwargs_list.append(kwargs)
-                [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file,dry_run=True)
+                if _run_forwarding_in_subprocesses(config):
+                    shared_list = list()
+                    output_folder = config['exp']['out_folder']
+                    save_gpumem = strtobool(config['exp']['save_gpumem'])
+                    use_cuda=strtobool(config['exp']['use_cuda'])
+                    p = read_next_chunk_into_shared_list_with_subprocess(read_lab_fea, shared_list, config_chunk_file, is_production, output_folder, wait_for_process=True)
+                    data_name, data_end_index_fea, data_end_index_lab, fea_dict, lab_dict, arch_dict, data_set_dict = extract_data_from_shared_list(shared_list)
+                    data_set_inp, data_set_ref = convert_numpy_to_torch(data_set_dict, save_gpumem, use_cuda)
+                    data_set = {'input': data_set_inp, 'ref': data_set_ref}
+                    data_end_index = {'fea': data_end_index_fea,'lab': data_end_index_lab}
+                    p = multiprocessing.Process(target=run_nn, kwargs={'data_name': data_name, 'data_set': data_set, 'data_end_index': data_end_index, 'fea_dict': fea_dict, 'lab_dict': lab_dict, 'arch_dict': arch_dict, 'cfg_file': config_chunk_file, 'processed_first': False, 'next_config_file': None})
+                    processes.append(p)
+                    p.start()
+                else:
+                    [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
+                    processed_first=False
+                    if not(os.path.exists(info_file)):
+                        sys.stderr.write("ERROR: forward chunk %i of dataset %s not done! File %s does not exist.\nSee %s \n" % (ck,forward_data,info_file,log_file))
+                        sys.exit(0)
                 
-                
-                # update the first_processed variable
-                processed_first=False
-            
-                if not(os.path.exists(info_file)):
-                    sys.stderr.write("ERROR: forward chunk %i of dataset %s not done! File %s does not exist.\nSee %s \n" % (ck,forward_data,info_file,log_file))
-                    sys.exit(0)
-            
+                info_files.append(info_file)
             
             # update the operation counter
             op_counter+=1
-         processes = list()
-         for kwargs in kwargs_list:
-             p = multiprocessing.Process(target=run_nn, kwargs=kwargs)
-             processes.append(p)
-             p.start()
-         for process in processes:
-             process.join()
-            
-                    
+         if _run_forwarding_in_subprocesses(config):
+             for process in processes:
+                 process.join()
+             for info_file in info_files:
+                 if not(os.path.exists(info_file)):
+                     sys.stderr.write("ERROR: File %s does not exist. Forwarding did not suceed.\nSee %s \n" % (info_file,log_file))
+                     sys.exit(0)
+                 
                
             
 # --------DECODING--------#
