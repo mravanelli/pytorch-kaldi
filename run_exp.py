@@ -16,7 +16,8 @@ import configparser
 import numpy as np
 from utils import check_cfg,create_lists,create_configs, compute_avg_performance, \
                   read_args_command_line, run_shell,compute_n_chunks, get_all_archs,cfg_item2sec, \
-                  dump_epoch_results, create_curves,change_lr_cfg,expand_str_ep
+                  dump_epoch_results, create_curves,change_lr_cfg,expand_str_ep, do_validation_after_chunk, \
+                  get_val_info_file_path, get_val_cfg_file_path, get_chunks_after_which_to_validate
 from data_io import read_lab_fea_refac01 as read_lab_fea
 from shutil import copyfile
 from core import read_next_chunk_into_shared_list_with_subprocess, extract_data_from_shared_list, convert_numpy_to_torch
@@ -32,6 +33,17 @@ def _run_forwarding_in_subprocesses(config):
         return False
     else:
         return True
+
+def _is_first_validation(ck, N_ck_tr, config):
+    def _get_nr_of_valid_per_epoch_from_config(config):
+        if not 'nr_of_valid_per_epoch' in config['exp']:
+            return 1
+        return int(config['exp']['nr_of_valid_per_epoch'])
+
+    val_chunks = get_chunks_after_which_to_validate(N_ck_tr, _get_nr_of_valid_per_epoch_from_config(config))
+    if ck == val_chunks[0]:
+        return True
+    return False
 
 # Reading global cfg file (first argument-mandatory file) 
 cfg_file=sys.argv[1]
@@ -161,6 +173,7 @@ for ep in range(N_ep):
     tr_loss_tot=0
     tr_error_tot=0
     tr_time_tot=0
+    val_time_tot=0
     
     print('------------------------------ Epoch %s / %s ------------------------------'%(format(ep, N_ep_str_format),format(N_ep-1, N_ep_str_format)))
 
@@ -225,85 +238,51 @@ for ep in range(N_ep):
                 for pt_arch in pt_files.keys():
                     if os.path.exists(model_files_past[pt_arch]):
                         os.remove(model_files_past[pt_arch]) 
-    
-    
+
+            if do_validation_after_chunk(ck, N_ck_tr, config):
+                if not _is_first_validation(ck, N_ck_tr, config):
+                    valid_peformance_dict_prev = valid_peformance_dict
+                valid_peformance_dict = {}  
+                for valid_data in valid_data_lst:
+                    N_ck_valid = compute_n_chunks(out_folder, valid_data, ep, N_ep_str_format, 'valid')
+                    N_ck_str_format_val = '0' + str(max(math.ceil(np.log10(N_ck_valid)), 1)) + 'd'
+                    for ck_val in range(N_ck_valid):
+                        info_file = get_val_info_file_path(out_folder, valid_data, ep, ck, ck_val, N_ep_str_format, N_ck_str_format, N_ck_str_format_val)
+                        config_chunk_file = get_val_cfg_file_path(out_folder, valid_data, ep, ck, ck_val, N_ep_str_format, N_ck_str_format, N_ck_str_format_val)
+                        if not(os.path.exists(info_file)):
+                            print('Validating %s chunk = %i / %i' %(valid_data, ck_val+1, N_ck_valid))
+                            next_config_file = cfg_file_list[op_counter]
+                            data_name, data_set, data_end_index, fea_dict, lab_dict, arch_dict = run_nn(data_name, data_set, data_end_index, fea_dict, lab_dict, arch_dict, config_chunk_file, processed_first, next_config_file)
+                            processed_first = False
+                            if not(os.path.exists(info_file)):
+                                sys.stderr.write("ERROR: validation on epoch %i, chunk %i, valid chunk %i of dataset %s not done! File %s does not exist.\nSee %s \n" % (ep, ck, ck_val, valid_data, info_file, log_file))
+                                sys.exit(0)
+                        op_counter+=1
+                    valid_info_lst = sorted(glob.glob(get_val_info_file_path(out_folder, valid_data, ep, ck, None, N_ep_str_format, N_ck_str_format, N_ck_str_format_val)))
+                    valid_loss, valid_error, valid_time = compute_avg_performance(valid_info_lst)
+                    valid_peformance_dict[valid_data] = [valid_loss,valid_error,valid_time]
+                    val_time_tot += valid_time
+                if not _is_first_validation(ck, N_ck_tr, config):
+                    err_valid_mean = np.mean(np.asarray(list(valid_peformance_dict.values()))[:,1])
+                    err_valid_mean_prev = np.mean(np.asarray(list(valid_peformance_dict_prev.values()))[:,1])
+                    for lr_arch in lr.keys():
+                        if ep < N_ep-1 and auto_lr_annealing[lr_arch]:
+                            if ((err_valid_mean_prev-err_valid_mean)/err_valid_mean)<improvement_threshold[lr_arch]:
+                                new_lr_value = float(lr[lr_arch][ep])*halving_factor[lr_arch]
+                                for i in range(ep + 1, N_ep):
+                                    lr[lr_arch][i] = str(new_lr_value)
+
         # Training Loss and Error    
-        tr_info_lst=sorted(glob.glob(out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'*.info'))
-        [tr_loss,tr_error,tr_time]=compute_avg_performance(tr_info_lst)
+        tr_info_lst = sorted(glob.glob(out_folder+'/exp_files/train_'+tr_data+'_ep'+format(ep, N_ep_str_format)+'*.info'))
+        [tr_loss,tr_error,tr_time] = compute_avg_performance(tr_info_lst)
         
         tr_loss_tot=tr_loss_tot+tr_loss
         tr_error_tot=tr_error_tot+tr_error
         tr_time_tot=tr_time_tot+tr_time
-        
-        
-        # ***Epoch validation***
-        if ep>0:
-            # store previous-epoch results (useful for learnig rate anealling)
-            valid_peformance_dict_prev=valid_peformance_dict
-        
-        valid_peformance_dict={}  
-        tot_time=tr_time  
-    
-    
-    for valid_data in valid_data_lst:
-        
-        # Compute the number of chunks for each validation dataset
-        N_ck_valid=compute_n_chunks(out_folder,valid_data,ep,N_ep_str_format,'valid')
-        N_ck_str_format='0'+str(max(math.ceil(np.log10(N_ck_valid)),1))+'d'
-    
-        for ck in range(N_ck_valid):
-            
-            
-            # paths of the output files
-            info_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.info'            
-            config_chunk_file=out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'_ck'+format(ck, N_ck_str_format)+'.cfg'
-    
-            # Do validation if the chunk was not already processed
-            if not(os.path.exists(info_file)):
-                print('Validating %s chunk = %i / %i' %(valid_data,ck+1,N_ck_valid))
-                    
-                # Doing eval
-                
-                # getting the next chunk 
-                next_config_file=cfg_file_list[op_counter]
-                                         
-                # run chunk processing                    
-                [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
-                                                   
-                # update the first_processed variable
-                processed_first=False
-                
-                if not(os.path.exists(info_file)):
-                    sys.stderr.write("ERROR: validation on epoch %i, chunk %i of dataset %s not done! File %s does not exist.\nSee %s \n" % (ep,ck,valid_data,info_file,log_file))
-                    sys.exit(0)
-    
-            # update the operation counter
-            op_counter+=1
-        
-        # Compute validation performance  
-        valid_info_lst=sorted(glob.glob(out_folder+'/exp_files/valid_'+valid_data+'_ep'+format(ep, N_ep_str_format)+'*.info'))
-        [valid_loss,valid_error,valid_time]=compute_avg_performance(valid_info_lst)
-        valid_peformance_dict[valid_data]=[valid_loss,valid_error,valid_time]
-        tot_time=tot_time+valid_time
-       
+        tot_time=tr_time + val_time_tot
         
     # Print results in both res_file and stdout
     dump_epoch_results(res_file_path, ep, tr_data_lst, tr_loss_tot, tr_error_tot, tot_time, valid_data_lst, valid_peformance_dict, lr, N_ep)
-
-        
-    # Check for learning rate annealing
-    if ep>0:
-        # computing average validation error (on all the dataset specified)
-        err_valid_mean=np.mean(np.asarray(list(valid_peformance_dict.values()))[:,1])
-        err_valid_mean_prev=np.mean(np.asarray(list(valid_peformance_dict_prev.values()))[:,1])
-        
-        for lr_arch in lr.keys():
-            # If an external lr schedule is not set, use newbob learning rate anealing
-            if ep<N_ep-1 and auto_lr_annealing[lr_arch]:
-                if ((err_valid_mean_prev-err_valid_mean)/err_valid_mean)<improvement_threshold[lr_arch]:
-                    new_lr_value = float(lr[lr_arch][ep])*halving_factor[lr_arch]
-                    for i in range(ep + 1, N_ep):
-                        lr[lr_arch][i] = str(new_lr_value)
 
 # Training has ended, copy the last .pkl to final_arch.pkl for production
 for pt_arch in pt_files.keys():
