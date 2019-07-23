@@ -12,6 +12,7 @@ import torch.nn as nn
 import numpy as np
 from distutils.util import strtobool
 import math
+import json
 
 # uncomment below if you want to use SRU
 # and you need to install SRU: pip install sru[cuda].
@@ -1751,3 +1752,38 @@ class SRU(nn.Module):
         output, hn = self.sru(x, c0=h0)
         return output
 
+
+class PASE(nn.Module):
+    def __init__(self, options, inp_dim):
+        super(PASE, self).__init__()
+        
+        # To use PASE within PyTorch-Kaldi, please clone the current PASE repository: https://github.com/santi-pdp/pase 
+        # Note that you have to clone the dev branch.
+        # Take a look into the requirements (requirements.txt) and install in your environment what is missing. An important requirement is QRNN (https://github.com/salesforce/pytorch-qrnn). Before starting working with PASE, it could make sense to a quick test  with QRNN independently (see “usage” section in the QRNN repository).
+        # Remember to install pase. This way it can be used outside the pase folder directory.  To do it, go into the pase folder and type:
+        # "python setup.py install"
+        
+        from pase.models.frontend import wf_builder
+
+        self.input_dim = inp_dim
+        self.pase_cfg= options['pase_cfg']
+        self.pase_model= options['pase_model']
+        
+        self.pase = wf_builder(self.pase_cfg)
+        
+        self.pase.load_pretrained(self.pase_model, load_last=True, verbose=True)
+        
+        # Reading the out_dim from the config file:
+        with open(self.pase_cfg) as json_file:
+            config = json.load(json_file)
+        
+        
+        self.out_dim = int(config['emb_dim'])
+        
+
+    def forward(self, x):
+        
+        x=x.unsqueeze(0).unsqueeze(0)
+        output=self.pase(x) 
+        
+        return output
