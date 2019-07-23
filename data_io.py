@@ -270,6 +270,7 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
             max_seq_length=_get_max_seq_length_from_config_str(config['batches']['max_seq_length_valid'])
         if to_do=='forward':
             max_seq_length=-1 # do to break forward sentences
+            fea_only=True
         fea_dict, lab_dict, arch_dict = dict_fea_lab_arch(config, fea_only)
         seq_model = is_sequential_dict(config, arch_dict)
         return to_do, max_seq_length, fea_dict, lab_dict, arch_dict, seq_model
