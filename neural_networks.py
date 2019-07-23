@@ -1759,7 +1759,8 @@ class PASE(nn.Module):
         
         # To use PASE within PyTorch-Kaldi, please clone the current PASE repository: https://github.com/santi-pdp/pase 
         # Note that you have to clone the dev branch.
-        # Take a look into the requirements (requirements.txt) and install in your environment what is missing. An important requirement is QRNN (https://github.com/salesforce/pytorch-qrnn). Before starting working with PASE, it could make sense to a quick test  with QRNN independently (see “usage” section in the QRNN repository).
+        # Take a look into the requirements (requirements.txt) and install in your environment what is missing. An important requirement is QRNN (https://github.com/salesforce/pytorch-qrnn). 
+        # Before starting working with PASE, it could make sense to a quick test  with QRNN independently (see “usage” section in the QRNN repository).
         # Remember to install pase. This way it can be used outside the pase folder directory.  To do it, go into the pase folder and type:
         # "python setup.py install"
         
