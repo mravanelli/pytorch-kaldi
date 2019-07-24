@@ -934,6 +934,12 @@ def create_lists(config):
         random.shuffle(full_list_fea_conc)
         valid_chunks_fea=list(split_chunks(full_list_fea_conc,N_chunks))
         return valid_chunks_fea
+    def _shuffle_forward_data(config):
+        if 'shuffle_forwarding_data' in config['forward']:
+            suffle_on_forwarding = strtobool(config['forward']['shuffle_forwarding_data'])
+            if not suffle_on_forwarding:
+                return False
+        return True
     
     # splitting data into chunks (see out_folder/additional_files)
     out_folder=config['exp']['out_folder']
@@ -1030,7 +1036,8 @@ def create_lists(config):
             
          
         # randomize the list
-        random.shuffle(full_list_fea_conc)
+        if _shuffle_forward_data(config):
+            random.shuffle(full_list_fea_conc)
         forward_chunks_fea=list(split_chunks(full_list_fea_conc,N_chunks))
 
         
