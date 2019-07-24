@@ -368,12 +368,13 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
             for lab in lab_dict.keys():
                 lab_folder, lab_opts = _get_lab_config_from_dict(lab_dict[lab], fea_only)
                 data_name_fea, data_set_fea, data_set_lab, data_end_index_fea, data_end_index_lab = _load_chunk_refac01(fea_scp, fea_opts, lab_folder, lab_opts, cw_left, cw_right, max_seq_length, output_folder, fea_only)
-                labs_fea, data_set_fea, data_end_index_fea, data_end_index_lab = _compensate_for_different_context_windows(data_set_fea, data_set_lab, cw_left_max, cw_left, cw_right_max, cw_right, data_end_index_fea, data_end_index_lab)
+                if sum([abs(e) for e in [cw_left_max, cw_right_max, cw_left, cw_right]]) != 0: 
+                    data_set_lab, data_set_fea, data_end_index_fea, data_end_index_lab = _compensate_for_different_context_windows(data_set_fea, data_set_lab, cw_left_max, cw_left, cw_right_max, cw_right, data_end_index_fea, data_end_index_lab)
                 if cnt_fea == 0 and cnt_lab == 0:
                     data_end_index_fea_ini = data_end_index_fea
                     data_end_index_lab_ini = data_end_index_lab
                     data_name = data_name_fea
-                data_set, labs, fea_dict, fea_index = _update_data(data_set, labs, fea_dict, fea, fea_index, data_set_fea, labs_fea, cnt_fea, cnt_lab)
+                data_set, labs, fea_dict, fea_index = _update_data(data_set, labs, fea_dict, fea, fea_index, data_set_fea, data_set_lab, cnt_fea, cnt_lab)
                 _check_consistency(data_name, data_name_fea, data_end_index_fea_ini, data_end_index_fea, data_end_index_lab_ini, data_end_index_lab)
                 cnt_lab=cnt_lab+1
             cnt_fea=cnt_fea+1
