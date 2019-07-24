@@ -305,9 +305,9 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
                 fea_index=fea_index+data_set_fea.shape[1]
                 fea_dict[fea].append(fea_index)
                 fea_dict[fea].append(fea_dict[fea][6]-fea_dict[fea][5])
-            elif cnt_fea==0 and (not cnt_fea==0):
+            elif cnt_fea==0 and (not cnt_lab==0):
                 labs=np.column_stack((labs,labs_fea))
-            elif (not cnt_fea==0) and cnt_fea==0:
+            elif (not cnt_fea==0) and cnt_lab==0:
                 data_set=np.column_stack((data_set,data_set_fea))
                 fea_dict[fea].append(fea_index)
                 fea_index=fea_index+data_set_fea.shape[1]
