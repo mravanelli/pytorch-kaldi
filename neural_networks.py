@@ -694,6 +694,23 @@ class logMelFb(nn.Module):
         out = log_mel_spec 
         return out
 
+class channel_averaging(nn.Module):
+    def __init__(self, options,inp_dim):
+        super(channel_averaging, self).__init__()
+        self._use_cuda = strtobool(options['use_cuda'])
+        channel_weights = [float(e) for e in options['chAvg_channelWeights'].split(',')]
+        self._nr_of_channels = len(channel_weights)
+        numpy_weights = np.asarray(channel_weights, dtype=np.float32) * 1.0 / np.sum(channel_weights)
+        self._weights = torch.from_numpy(numpy_weights) 
+        if self._use_cuda:
+            self._weights = self._weights.cuda()
+        self.out_dim = 1
+    
+    def forward(self, x):
+        assert self._nr_of_channels == x.shape[-1]
+        out = torch.einsum('tbc,c->tb', x, self._weights).unsqueeze(-1)
+        return out
+
 class liGRU(nn.Module):
     
     def __init__(self, options,inp_dim):

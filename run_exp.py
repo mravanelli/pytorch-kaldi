@@ -45,6 +45,11 @@ def _is_first_validation(ck, N_ck_tr, config):
         return True
     return False
 
+def _max_nr_of_parallel_forwarding_processes(config):
+    if 'max_nr_of_parallel_forwarding_processes' in config['forward']:
+        return int(config['forward']['max_nr_of_parallel_forwarding_processes'])
+    return -1
+
 # Reading global cfg file (first argument-mandatory file) 
 cfg_file=sys.argv[1]
 if not(os.path.exists(cfg_file)):
@@ -332,6 +337,9 @@ for forward_data in forward_data_lst:
                     data_end_index = {'fea': data_end_index_fea,'lab': data_end_index_lab}
                     p = multiprocessing.Process(target=run_nn, kwargs={'data_name': data_name, 'data_set': data_set, 'data_end_index': data_end_index, 'fea_dict': fea_dict, 'lab_dict': lab_dict, 'arch_dict': arch_dict, 'cfg_file': config_chunk_file, 'processed_first': False, 'next_config_file': None})
                     processes.append(p)
+                    if _max_nr_of_parallel_forwarding_processes(config) != -1 and len(processes) > _max_nr_of_parallel_forwarding_processes(config):
+                        processes[0].join()
+                        del processes[0]
                     p.start()
                 else:
                     [data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict]=run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,config_chunk_file,processed_first,next_config_file)
