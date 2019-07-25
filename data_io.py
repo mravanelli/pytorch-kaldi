@@ -23,6 +23,9 @@ def load_dataset(fea_scp,fea_opts,lab_folder,lab_opts,left,right, max_sequence_l
     def _input_is_feature_file(fea_scp):
         return not _input_is_wav_file(fea_scp)
     def _read_features_and_labels_with_kaldi(fea_scp, fea_opts, fea_only, lab_folder, lab_opts, output_folder):
+        def _sort_before_loading():
+            return True #For now this decision is hard coded
+
         fea = dict()
         lab = dict()
         if _input_is_feature_file(fea_scp):
@@ -31,7 +34,11 @@ def load_dataset(fea_scp,fea_opts,lab_folder,lab_opts,left,right, max_sequence_l
         elif _input_is_wav_file(fea_scp):
             kaldi_bin="wav-copy"
             read_function = read_vec_flt_ark
-        fea = { k:m for k,m in read_function('ark:'+kaldi_bin+' scp:'+fea_scp+' ark:- |'+fea_opts,output_folder) }
+        if _sort_before_loading():
+            fea_scp_string='"cat '+fea_scp+' | sort -k 1 |"'
+        else:
+            fea_scp_string=fea_scp
+        fea = { k:m for k,m in read_function('ark:'+kaldi_bin+' scp:'+fea_scp_string+' ark:- |'+fea_opts,output_folder) }
         if not fea_only:
             lab = { k:v for k,v in read_vec_int_ark('gunzip -c '+lab_folder+'/ali*.gz | '+lab_opts+' '+lab_folder+'/final.mdl ark:- ark:-|',output_folder)  if k in fea} # Note that I'm copying only the aligments of the loaded fea
             fea = {k: v for k, v in fea.items() if k in lab} # This way I remove all the features without an aligment (see log file in alidir "Did not Succeded")
