@@ -195,11 +195,10 @@ def context_window(fea,left,right):
     
     index_fea=0
     for lag in range(-left,right+1):
-        fea_conc[:,index_fea:index_fea+fea.shape[1]]=np.roll(fea,lag,axis=0)
+        fea_conc[:,index_fea:index_fea+fea.shape[1]]=np.roll(fea,-lag,axis=0)
         index_fea=index_fea+fea.shape[1]
         
     fea_conc=fea_conc[left:fea_conc.shape[0]-right]
-    
     return fea_conc
 
 
