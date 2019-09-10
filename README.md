@@ -23,9 +23,22 @@ To improve transparency and replicability of speech recognition results, we give
 
 [See a short introductory video on the PyTorch-Kaldi Toolkit](https://www.youtube.com/watch?v=VDQaf0SS4K0&t=2s)
 
-## Next Version
-We are actively working on the next version of PyTorch-Kaldi (v2.0). The architecture of the toolkit will be more modular and flexible. Beyond speech recognition, the new toolkit will be suitable for other applications such as speaker recognition, speech enhancement, speech separation, etc.
-The toolkit will support labels and features in many different formats (not just the current kaldi one) and will be much easier feeding the system with the raw samples directly. The toolkit will support a number of data processing functions, including data augmentation and contamination. We are also working to support self-supervised training.  
+## Next Version: SpeechBrain 
+We are happy to announce the SpeechBrain project (https://speechbrain.github.io/), that aims to develop an **open-source all-in-one** toolkit based on PyTorch. The SpeechBrain project will significantly extend the functionality of the current PyTorch-Kaldi toolkit. 
+
+The goal is to develop a *single*, *flexible*, and *user-friendly* toolkit that can be used to easily develop state-of-the-art speech systems for speech recognition (both end-to-end and HMM-DNN), speaker recognition, speech separation, multi-microphone signal processing (e.g, beamforming), self-supervised learning, and many others.
+
+The project will be lead by Mila and is sponsored by Samsung, Nvidia, Dolby. 
+SpeechBrain will also benefit from the collaboration and expertise of other companies such as Facebook/PyTorch, IBMResearch, FluentAI. 
+
+We are actively looking for collaborators. Feel free to contact us at speechbrainproject@gmail.com if you are interested to collaborate.
+
+Thanks to our sponsors we are also able to hire interns working at Mila on the SpeechBrain project. The ideal candidate is a PhD student with experience on pytorch and speech technologies (send your CV to speechbrainproject@gmail.com)
+
+The development of SpeechBrain will require some months before having a working repository. Meanwhile, we will continue providing support for the pytorch-kaldi project.
+
+Stay Tuned!
+
 
 ## Table of Contents
 * [Introduction](#introduction)
