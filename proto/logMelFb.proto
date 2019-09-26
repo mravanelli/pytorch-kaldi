@@ -2,5 +2,6 @@
 logmelfb_nr_filt=int
 logmelfb_stft_window_size=int
 logmelfb_stft_window_shift=int
+logmelfb_normalization_mode=str
 
 
