@@ -16,6 +16,7 @@
 # limitations under the License.
 
 # Generated Nnet prototype, to be initialized by 'nnet-initialize'.
+from __future__ import print_function
 
 import math, random, sys
 from optparse import OptionParser
@@ -74,7 +75,7 @@ if len(args) != 1 :
   parser.print_help()
   sys.exit(1)
  
-feat_dim = int(args[0]);
+feat_dim = int(args[0])
 ### End parse options 
 
 feat_raw_dim = feat_dim / (o.delta_order+1) / (o.splice*2+1) - o.pitch_dim # we need number of feats without deltas and splice and pitch
@@ -88,7 +89,7 @@ assert(o.pool_type == 'Max' or o.pool_type == 'Average')
 ###
 
 # Begin the prototype
-print "<NnetProto>"
+print("<NnetProto>")
 
 # Convolutional part of network
 num_patch1 = 1 + (feat_raw_dim - o.patch_dim1) / o.patch_step1
@@ -141,19 +142,19 @@ if (o.pitch_dim > 0):
   f_pitch.write('</NnetProto>\n')
   f_pitch.close()
 
-  # paralell part
+  # parallel part
   vector = ''
   for i in range(1, (feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), feat_raw_dim + o.pitch_dim):
     vector += '%d:1:%d ' % (i, i + feat_raw_dim - 1)
   for i in range(feat_raw_dim+1, (feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), feat_raw_dim + o.pitch_dim):
     vector += '%d:1:%d ' % (i, i + o.pitch_dim - 1)
-  print '<Copy> <InputDim> %d <OutputDim> %d <BuildVector> %s </BuildVector>' % \
-	((feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), (feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), vector)
-  print '<ParallelComponent> <InputDim> %d <OutputDim> %d <NestedNnetProto> %s %s </NestedNnetProto>' % \
-	((feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), o.num_pitch_neurons + o.num_filters2*num_patch2, '%s/nnet.proto.convolution' % o.protodir, '%s/nnet.proto.pitch' % o.protodir)
+  print('<Copy> <InputDim> %d <OutputDim> %d <BuildVector> %s </BuildVector>' % \
+	((feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), (feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), vector))
+  print('<ParallelComponent> <InputDim> %d <OutputDim> %d <NestedNnetProto> %s %s </NestedNnetProto>' % \
+	((feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), o.num_pitch_neurons + o.num_filters2*num_patch2, '%s/nnet.proto.convolution' % o.protodir, '%s/nnet.proto.pitch' % o.protodir))
 
 else: # no pitch
-  print convolution_proto
+  print(convolution_proto)
 
 # We are done!
 sys.exit(0)

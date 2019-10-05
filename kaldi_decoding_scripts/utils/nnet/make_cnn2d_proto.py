@@ -16,6 +16,7 @@
 # limitations under the License.
 
 # Generated Nnet prototype, to be initialized by 'nnet-initialize'.
+from __future__ import print_function
 
 import math, random, sys, warnings
 from optparse import OptionParser
@@ -149,7 +150,7 @@ def fix_filt_step(inp_len, filt_len, filt_step):
     return filt_step
   else:
     # filt_step <= filt_len
-    for filt_step in xrange(filt_len, 0, -1):
+    for filt_step in range(filt_len, 0, -1):
       if ((inp_len - filt_len) % filt_step == 0):
         return filt_step
     
@@ -167,7 +168,7 @@ if o.pool1_x_step == 1 and o.pool1_x_len != 1:
 ###
 
 # Begin the prototype
-print "<NnetProto>"
+print("<NnetProto>")
 
 # Convolutional part of network
 '''1st CNN layer'''
@@ -242,14 +243,14 @@ if (o.pitch_dim > 0):
     vector += '%d:1:%d ' % (i, i + feat_raw_dim - 1)
   for i in range(feat_raw_dim+1, (feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), feat_raw_dim + o.pitch_dim):
     vector += '%d:1:%d ' % (i, i + o.pitch_dim - 1)
-  print '<Copy> <InputDim> %d <OutputDim> %d <BuildVector>  %s </BuildVector> ' % \
-	((feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), (feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), vector)
-  print '<ParallelComponent> <InputDim> %d <OutputDim> %d <NestedNnetProto> %s %s </NestedNnetProto>' % \
-	((feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), o.num_pitch_neurons + cnn2_output_dim, '%s/nnet.proto.convolution' % o.dirct, '%s/nnet.proto.pitch' % o.dirct)
+  print('<Copy> <InputDim> %d <OutputDim> %d <BuildVector>  %s </BuildVector> ' % \
+	((feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), (feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), vector))
+  print('<ParallelComponent> <InputDim> %d <OutputDim> %d <NestedNnetProto> %s %s </NestedNnetProto>' % \
+	((feat_raw_dim + o.pitch_dim) * (o.delta_order+1) * (o.splice*2+1), o.num_pitch_neurons + cnn2_output_dim, '%s/nnet.proto.convolution' % o.dirct, '%s/nnet.proto.pitch' % o.dirct))
 
   num_convolution_output = o.num_pitch_neurons + cnn2_output_dim
 else: # no pitch
-  print convolution_proto
+  print(convolution_proto)
 
 # We are done!
 sys.exit(0)

@@ -16,6 +16,7 @@
 # limitations under the License.
 
 # Generated Nnet prototype, to be initialized by 'nnet-initialize'.
+from __future__ import print_function
 
 import sys
 
@@ -44,7 +45,7 @@ if len(args) != 2 :
   parser.print_help()
   sys.exit(1)
 
-(feat_dim, num_leaves) = map(int,args);
+(feat_dim, num_leaves) = list(map(int,args));
 
 # Original prototype from Jiayu,
 #<NnetProto>
@@ -54,23 +55,23 @@ if len(args) != 2 :
 #<Softmax> <InputDim> 8000 <OutputDim> 8000
 #</NnetProto>
 
-print "<NnetProto>"
+print("<NnetProto>")
 # normally we won't use more than 2 layers of LSTM
 if o.num_layers == 1:
-    print "<BLstmProjectedStreams> <InputDim> %d <OutputDim> %d <CellDim> %s <ParamScale> %f <ClipGradient> %f" % \
-        (feat_dim, 2*o.num_recurrent, o.num_cells, o.lstm_stddev_factor, o.clip_gradient)
+    print("<BLstmProjectedStreams> <InputDim> %d <OutputDim> %d <CellDim> %s <ParamScale> %f <ClipGradient> %f" % \
+        (feat_dim, 2*o.num_recurrent, o.num_cells, o.lstm_stddev_factor, o.clip_gradient))
 elif o.num_layers == 2:
-    print "<BLstmProjectedStreams> <InputDim> %d <OutputDim> %d <CellDim> %s <ParamScale> %f <ClipGradient> %f" % \
-        (feat_dim, 2*o.num_recurrent, o.num_cells, o.lstm_stddev_factor, o.clip_gradient)
-    print "<BLstmProjectedStreams> <InputDim> %d <OutputDim> %d <CellDim> %s <ParamScale> %f <ClipGradient> %f" % \
-        (2*o.num_recurrent, 2*o.num_recurrent, o.num_cells, o.lstm_stddev_factor, o.clip_gradient)
+    print("<BLstmProjectedStreams> <InputDim> %d <OutputDim> %d <CellDim> %s <ParamScale> %f <ClipGradient> %f" % \
+        (feat_dim, 2*o.num_recurrent, o.num_cells, o.lstm_stddev_factor, o.clip_gradient))
+    print("<BLstmProjectedStreams> <InputDim> %d <OutputDim> %d <CellDim> %s <ParamScale> %f <ClipGradient> %f" % \
+        (2*o.num_recurrent, 2*o.num_recurrent, o.num_cells, o.lstm_stddev_factor, o.clip_gradient))
 else:
     sys.stderr.write("make_lstm_proto.py ERROR: more than 2 layers of LSTM, not supported yet.\n")
     sys.exit(1)
-print "<AffineTransform> <InputDim> %d <OutputDim> %d <BiasMean> 0.0 <BiasRange> 0.0 <ParamStddev> %f" % \
-    (2*o.num_recurrent, num_leaves, o.param_stddev_factor)
-print "<Softmax> <InputDim> %d <OutputDim> %d" % \
-    (num_leaves, num_leaves)
-print "</NnetProto>"
+print("<AffineTransform> <InputDim> %d <OutputDim> %d <BiasMean> 0.0 <BiasRange> 0.0 <ParamStddev> %f" % \
+    (2*o.num_recurrent, num_leaves, o.param_stddev_factor))
+print("<Softmax> <InputDim> %d <OutputDim> %d" % \
+    (num_leaves, num_leaves))
+print("</NnetProto>")
 
 
