@@ -513,6 +513,9 @@ def run_nn(data_name,data_set,data_end_index,fea_dict,lab_dict,arch_dict,cfg_fil
                     out_save=out_save-np.log(counts/np.sum(counts))             
                     
                 # save the output    
+                if out_save.ndim == 3:
+                    # remove the batch dimension when arch_seq_model is True
+                    out_save = np.squeeze(out_save, axis=1)
                 write_mat(output_folder,post_file[forward_outs[out_id]], out_save, data_name[i])
         else:
             loss_sum=loss_sum+outs_dict['loss_final'].detach()
