@@ -1,0 +1,7 @@
+[proto]
+lstm_lay=str_list
+lstm_drop=float_list(0.0,1.0)
+lstm_bidir=bool
+lstm_act=str_list
+quaternion_init=str
+autograd=bool
