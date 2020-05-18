@@ -13,7 +13,6 @@ import numpy as np
 from distutils.util import strtobool
 import math
 import json
-from quaternion_layers import *
 
 # uncomment below if you want to use SRU
 # and you need to install SRU: pip install sru[cuda].
@@ -716,58 +715,6 @@ class channel_averaging(nn.Module):
         assert self._nr_of_channels == x.shape[-1]
         out = torch.einsum("tbc,c->tb", x, self._weights).unsqueeze(-1)
         return out
-
-class liGRU_jit_orig(torch.jit.ScriptModule):
-    def __init__(self, options, inp_dim):
-        super(liGRU_jit_orig, self).__init__()
-
-        # Reading parameters
-        input_size = inp_dim
-        hidden_size = list(map(int, options["ligru_lay"].split(",")))[0]
-        dropout = list(map(float, options["ligru_drop"].split(",")))[0]
-        num_layers = len(list(map(int, options["ligru_lay"].split(","))))
-        batch_size = int(options["batches"])
-        self.to_do = options["to_do"]
-
-        bidirectional = True
-
-        self.out_dim = 2 * hidden_size
-
-        current_dim = int(input_size)
-
-        self.model = torch.nn.ModuleList([])
-
-        if self.to_do == "train":
-            self.training = True
-        else:
-            self.training = False
-
-        for i in range(num_layers):
-            rnn_lay = liGRU_layer_orig(
-                current_dim,
-                hidden_size,
-                num_layers,
-                batch_size,
-                dropout=dropout,
-                bidirectional=bidirectional,
-                device="cuda",
-            )
-
-            self.model.append(rnn_lay)
-
-            if bidirectional:
-                current_dim = hidden_size * 2
-            else:
-                current_dim == hidden_size
-
-    @torch.jit.script_method
-    def forward(self, x):
-        # type: (Tensor) -> Tensor
-
-        for ligru_lay in self.model:
-            x = ligru_lay(x)
-
-        return x
 
 class fusionRNN_jit(torch.jit.ScriptModule):
     def __init__(self, options, inp_dim):
