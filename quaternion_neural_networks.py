@@ -22,7 +22,7 @@ class QLSTM(nn.Module):
     """
         This class implements a straightforward QLSTM as described
         in "Quaternion Recurrent Neural Networks", Titouan P., ICLR 2019
-        
+
         Please note that the autograd parameter is usefull if you run out of
         VRAM. Set it to False, and the model will use a custom QuaternionLinear
         function that follows a custom backpropagation. The training will
@@ -45,8 +45,8 @@ class QLSTM(nn.Module):
             self.test_flag=False
         else:
             self.test_flag=True
-        
-        
+
+
         # List initialization
         self.wfx  = nn.ModuleList([]) # Forget
         self.ufh  = nn.ModuleList([]) # Forget
@@ -65,7 +65,7 @@ class QLSTM(nn.Module):
         self.N_lstm_lay=len(self.lstm_lay)
 
         # Initialization of hidden layers
-
+        current_input=self.input_dim
         for i in range(self.N_lstm_lay):
 
              # Activations
@@ -221,7 +221,7 @@ class QuaternionLinearAutograd(Module):
             + ', seed=' + str(self.seed) + ')'
 
 class QuaternionLinear(Module):
-    r"""A custom Autograd function is call to drastically reduce the VRAM consumption. 
+    r"""A custom Autograd function is call to drastically reduce the VRAM consumption.
     Nonetheless, computing time is increased compared to QuaternionLinearAutograd().
     """
 
@@ -278,7 +278,7 @@ class QuaternionLinear(Module):
             + ', init_criterion=' + str(self.init_criterion) \
             + ', weight_init=' + str(self.weight_init) \
             + ', seed=' + str(self.seed) + ')'
-    
+
 #
 # Thereafter are utility functions needed by the above classes
 #
@@ -337,7 +337,7 @@ def check_input(input):
             "Quaternion Tensors must be divisible by 4."
             " input.size()[1] = " + str(nb_hidden)
         )
-        
+
 #
 # Quaternion getters!
 #

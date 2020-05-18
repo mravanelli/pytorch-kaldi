@@ -175,6 +175,14 @@ class LSTM_cudnn(nn.Module):
             ]
         )
 
+        for name,param in self.lstm[0].named_parameters():
+            if 'weight_hh' in name:
+                if self.batch_first:
+                    nn.init.orthogonal_(param)
+            elif 'bias' in name:
+                nn.init.zeros_(param)
+
+
         self.out_dim = self.hidden_size + self.bidirectional * self.hidden_size
 
     def forward(self, x):
@@ -219,6 +227,14 @@ class GRU_cudnn(nn.Module):
                 )
             ]
         )
+
+        for name,param in self.gru[0].named_parameters():
+            if 'weight_hh' in name:
+                nn.init.orthogonal_(param)
+            elif 'weight_ih' in name:
+                nn.init.xavier_uniform_(param)
+            elif 'bias' in name:
+                nn.init.zeros_(param)
 
         self.out_dim = self.hidden_size + self.bidirectional * self.hidden_size
 
@@ -700,6 +716,283 @@ class channel_averaging(nn.Module):
         out = torch.einsum("tbc,c->tb", x, self._weights).unsqueeze(-1)
         return out
 
+class fusionRNN_jit(torch.jit.ScriptModule):
+    def __init__(self, options, inp_dim):
+        super(fusionRNN_jit, self).__init__()
+
+        # Reading parameters
+        input_size = inp_dim
+        hidden_size = list(map(int, options["fusionRNN_lay"].split(",")))[0]
+        dropout = list(map(float, options["fusionRNN_drop"].split(",")))[0]
+        num_layers = len(list(map(int, options["fusionRNN_lay"].split(","))))
+        batch_size = int(options["batches"])
+        self.do_fusion = map(strtobool, options["fusionRNN_do_fusion"].split(","))
+        self.act = str(options["fusionRNN_fusion_act"])
+        self.reduce = str(options["fusionRNN_fusion_reduce"])
+        self.fusion_layer_size = int(options["fusionRNN_fusion_layer_size"])
+        self.to_do = options["to_do"]
+        self.number_of_mic = int(options["fusionRNN_number_of_mic"])
+        self.save_mic = self.number_of_mic
+        bidirectional = True
+
+        self.out_dim = 2 * hidden_size
+
+        current_dim = int(input_size)
+
+        self.model = torch.nn.ModuleList([])
+
+        if self.to_do == "train":
+            self.training = True
+        else:
+            self.training = False
+
+        for i in range(num_layers):
+            rnn_lay = liGRU_layer(
+                current_dim,
+                hidden_size,
+                num_layers,
+                batch_size,
+                dropout=dropout,
+                bidirectional=bidirectional,
+                device="cuda",
+                do_fusion=self.do_fusion,
+                fusion_layer_size=self.fusion_layer_size,
+                number_of_mic=self.number_of_mic,
+                act=self.act,
+                reduce=self.reduce
+            )
+            if i == 0:
+
+                if self.do_fusion:
+                    if bidirectional:
+                        current_dim = (self.fusion_layer_size // self.save_mic) * 2
+                    else:
+                        current_dim = self.fusion_layer_size // self.save_mic
+                    #We need to reset the number of mic for the next layers so it is divided by 1
+                    self.number_of_mic = 1
+                else:
+                    if bidirectional:
+                        current_dim = hidden_size * 2
+                    else:
+                        current_dim = hidden_size
+                self.do_fusion = False # DO NOT APPLY FUSION ON THE NEXT LAYERS
+            else:
+                if bidirectional:
+                    current_dim = hidden_size * 2
+                else:
+                    current_dim == hidden_size
+            self.model.append(rnn_lay)
+
+
+    @torch.jit.script_method
+    def forward(self, x):
+        # type: (Tensor) -> Tensor
+
+        for ligru_lay in self.model:
+
+            x = ligru_lay(x)
+
+        return x
+
+
+class liGRU_layer(torch.jit.ScriptModule):
+    def __init__(
+        self,
+        input_size,
+        hidden_size,
+        num_layers,
+        batch_size,
+        dropout=0.0,
+        nonlinearity="relu",
+        bidirectional=True,
+        device="cuda",
+        do_fusion=False,
+        fusion_layer_size=64,
+        number_of_mic=1,
+        act="relu",
+        reduce="mean",
+    ):
+
+        super(liGRU_layer, self).__init__()
+
+        self.hidden_size = int(hidden_size)
+        self.input_size = int(input_size)
+        self.batch_size = batch_size
+        self.bidirectional = bidirectional
+        self.dropout = dropout
+        self.device = device
+        self.do_fusion = do_fusion
+        self.fusion_layer_size = fusion_layer_size
+        self.number_of_mic = number_of_mic
+        self.act = act
+        self.reduce = reduce
+
+        if self.do_fusion:
+            self.hidden_size = self.fusion_layer_size //  self.number_of_mic
+
+        if self.do_fusion:
+            self.wz = FusionLinearConv(
+                self.input_size, self.hidden_size, bias=True, number_of_mic = self.number_of_mic, act=self.act, reduce=self.reduce
+            ).to(device)
+
+            self.wh = FusionLinearConv(
+                self.input_size, self.hidden_size, bias=True, number_of_mic = self.number_of_mic, act=self.act, reduce=self.reduce
+            ).to(device)
+        else:
+            self.wz = nn.Linear(
+                self.input_size, self.hidden_size, bias=True
+            ).to(device)
+
+            self.wh = nn.Linear(
+                self.input_size, self.hidden_size, bias=True
+            ).to(device)
+
+            self.wz.bias.data.fill_(0)
+            torch.nn.init.xavier_normal_(self.wz.weight.data)
+            self.wh.bias.data.fill_(0)
+            torch.nn.init.xavier_normal_(self.wh.weight.data)
+
+        self.u = nn.Linear(
+            self.hidden_size, 2 * self.hidden_size, bias=False
+        ).to(device)
+
+        # Adding orthogonal initialization for recurrent connection
+        nn.init.orthogonal_(self.u.weight)
+
+        self.bn_wh = nn.BatchNorm1d(self.hidden_size, momentum=0.05).to(
+            device
+        )
+
+        self.bn_wz = nn.BatchNorm1d(self.hidden_size, momentum=0.05).to(
+            device
+        )
+
+
+        self.drop = torch.nn.Dropout(p=self.dropout, inplace=False).to(device)
+        self.drop_mask_te = torch.tensor([1.0], device=device).float()
+        self.N_drop_masks = 100
+        self.drop_mask_cnt = 0
+
+        # Setting the activation function
+        self.act = torch.nn.ReLU().to(device)
+
+    @torch.jit.script_method
+    def forward(self, x):
+        # type: (Tensor) -> Tensor
+
+        if self.bidirectional:
+            x_flip = x.flip(0)
+            x = torch.cat([x, x_flip], dim=1)
+
+        # Feed-forward affine transformations (all steps in parallel)
+        wz = self.wz(x)
+        wh = self.wh(x)
+
+        # Apply batch normalization
+        wz_bn = self.bn_wz(wz.view(wz.shape[0] * wz.shape[1], wz.shape[2]))
+        wh_bn = self.bn_wh(wh.view(wh.shape[0] * wh.shape[1], wh.shape[2]))
+
+        wz = wz_bn.view(wz.shape[0], wz.shape[1], wz.shape[2])
+        wh = wh_bn.view(wh.shape[0], wh.shape[1], wh.shape[2])
+
+        # Processing time steps
+        h = self.ligru_cell(wz, wh)
+
+        if self.bidirectional:
+            h_f, h_b = h.chunk(2, dim=1)
+            h_b = h_b.flip(0)
+            h = torch.cat([h_f, h_b], dim=2)
+
+        return h
+
+    @torch.jit.script_method
+    def ligru_cell(self, wz, wh):
+        # type: (Tensor, Tensor) -> Tensor
+
+        if self.bidirectional:
+            h_init = torch.zeros(
+                2 * self.batch_size,
+                self.hidden_size,
+                device="cuda",
+            )
+            drop_masks_i = self.drop(
+                torch.ones(
+                    self.N_drop_masks,
+                    2 * self.batch_size,
+                    self.hidden_size,
+                    device="cuda",
+                )
+            ).data
+
+        else:
+            h_init = torch.zeros(
+                self.batch_size,
+                self.hidden_size,
+                device="cuda",
+            )
+            drop_masks_i = self.drop(
+                torch.ones(
+                    self.N_drop_masks,
+                    self.batch_size,
+                    self.hidden_size,
+                    device="cuda",
+                )
+            ).data
+
+        hiddens = []
+        ht = h_init
+
+        if self.training:
+
+            drop_mask = drop_masks_i[self.drop_mask_cnt]
+            self.drop_mask_cnt = self.drop_mask_cnt + 1
+
+            if self.drop_mask_cnt >= self.N_drop_masks:
+                self.drop_mask_cnt = 0
+                if self.bidirectional:
+                    drop_masks_i = (
+                        self.drop(
+                            torch.ones(
+                                self.N_drop_masks,
+                                2 * self.batch_size,
+                                self.hidden_size,
+                            )
+                        )
+                        .to(self.device)
+                        .data
+                    )
+                else:
+                    drop_masks_i = (
+                        self.drop(
+                            torch.ones(
+                                self.N_drop_masks,
+                                self.batch_size,
+                                self.hidden_size,
+                            )
+                        )
+                        .to(self.device)
+                        .data
+                    )
+
+        else:
+            drop_mask = self.drop_mask_te
+
+        for k in range(wh.shape[0]):
+
+            uz, uh = self.u(ht).chunk(2, 1)
+
+            at = wh[k] + uh
+            zt = wz[k] + uz
+
+            # ligru equation
+            zt = torch.sigmoid(zt)
+            hcand = self.act(at) * drop_mask
+            ht = zt * ht + (1 - zt) * hcand
+            hiddens.append(ht)
+
+        # Stacking hidden states
+        h = torch.stack(hiddens)
+        return h
 
 class liGRU(nn.Module):
     def __init__(self, options, inp_dim):
@@ -1760,3 +2053,47 @@ class PASE(nn.Module):
         output = self.pase(x)
 
         return output
+
+class FusionLinearConv(Module):
+    r"""Applies a FusionLayer as described in:
+        'FusionRNN: Shared Neural Parameters for
+        Multi-Channel Distant Speech Recognition', Titouan P. et Al.
+
+        Input channels are supposed to be concatenated along the last dimension
+    """
+
+    def __init__(self, in_features, out_features, number_of_mic=1, bias=True,seed=None,act="leaky",reduce="sum"):
+
+        super(FusionLinearConv, self).__init__()
+        self.in_features       = in_features // number_of_mic
+        self.out_features      = out_features
+        self.number_of_mic     = number_of_mic
+        self.reduce            = reduce
+
+        if act == "leaky_relu":
+            self.act_function = nn.LeakyReLU()
+        elif act == "prelu":
+            self.act_function = nn.PReLU()
+        elif act == "relu":
+            self.act_function = nn.ReLU()
+        else:
+            self.act_function = nn.Tanh()
+
+        self.conv = nn.Conv1d(1, self.out_features, kernel_size=self.in_features, stride=self.in_features, bias=True, padding=0)
+
+        self.conv.bias.data.fill_(0)
+        torch.nn.init.xavier_normal_(self.conv.weight.data)
+
+
+    def forward(self, input):
+
+        orig_shape = input.shape
+
+        out = self.act_function(self.conv(input.view(orig_shape[0]*orig_shape[1], 1, -1)))
+
+        if self.reduce == "mean":
+            out = torch.mean(out, dim=-1)
+        else:
+            out = torch.sum(out, dim=-1)
+
+        return out.view(orig_shape[0],orig_shape[1], -1)
