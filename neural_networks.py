@@ -2054,7 +2054,7 @@ class PASE(nn.Module):
 
         return output
 
-class FusionLinearConv(Module):
+class FusionLinearConv(nn.Module):
     r"""Applies a FusionLayer as described in:
         'FusionRNN: Shared Neural Parameters for
         Multi-Channel Distant Speech Recognition', Titouan P. et Al.
