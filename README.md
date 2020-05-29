@@ -660,10 +660,10 @@ opt_nesterov=False
 
 6. Run the experiment with: 
 ```
-python run_exp.sh cfg/myDNN_exp.cfg
+python run_exp.py cfg/myDNN_exp.cfg
 ```
 
-7. To debug the model you can first take a look at the standard output. The config file is automatically parsed by the *run_exp.sh* and it raises errors in case of possible problems. You can also take a look into the *log.log* file to see additional information on the possible errors. 
+7. To debug the model you can first take a look at the standard output. The config file is automatically parsed by the *run_exp.py* and it raises errors in case of possible problems. You can also take a look into the *log.log* file to see additional information on the possible errors. 
 
 
 When implementing a new model, an important debug test consists of doing an overfitting experiment (to make sure that the model is able to overfit a tiny dataset). If the model is not able to overfit, it means that there is a major bug to solve.
@@ -688,7 +688,7 @@ PyTorch-Kaldi can be used with any speech dataset. To use your own dataset, the 
 1. Run the Kaldi recipe with your dataset. Please, see the Kaldi website to have more information on how to perform data preparation.
 2. Compute the alignments on training, validation, and test data.
 3. Write a PyTorch-Kaldi config file *$cfg_file*.
-4. Run the config file with ```python run_exp.sh $cfg_file```.
+4. Run the config file with ```python run_exp.py $cfg_file```.
 
 ## How can I plug-in my own features
 The current version of PyTorch-Kaldi supports input features stored with the Kaldi ark format. If the user wants to perform experiments with customized features, the latter must be converted into the ark format. Take a look into the Kaldi-io-for-python git repository (https://github.com/vesis84/kaldi-io-for-python) for a detailed description about converting numpy arrays into ark files. 
@@ -807,7 +807,7 @@ To use this model for speech recognition on TIMIT, to the following steps:
 2. Save the raw waveform into the Kaldi ark format. To do it, you can use the save_raw_fea.py utility in our repository. The script saves the input signals into a binary Kaldi archive, keeping the alignments with the pre-computed labels. You have to run it for all the data chunks (e.g., train, dev, test). It can also specify the length of the speech chunk (*sig_wlen=200 # ms*) composing each frame.
 3. Open the *cfg/TIMIT_baselines/TIMIT_SincNet_raw.cfg*, change your paths, and run:
 ```    
-python ./run_exp.sh cfg/TIMIT_baselines/TIMIT_SincNet_raw.cfg
+python ./run_exp.py cfg/TIMIT_baselines/TIMIT_SincNet_raw.cfg
 ```    
 
 4. With this architecture, we have obtained a **PER(%)=17.1%**. A standard CNN fed the same features gives us a **PER(%)=18.%**. Please, see [here](https://bitbucket.org/mravanelli/pytorch-kaldi-exp-timit/src/master/) to take a look into our results. Our results on SincNet outperforms results obtained with MFCCs and FBANKs fed by standard feed-forward networks.
