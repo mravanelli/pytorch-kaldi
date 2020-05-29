@@ -32,7 +32,7 @@ from utils import (
     get_val_cfg_file_path,
     get_chunks_after_which_to_validate,
 )
-from data_io import read_lab_fea_refac01 as read_lab_fea
+from data_io import read_lab_fea
 from shutil import copyfile
 from core import read_next_chunk_into_shared_list_with_subprocess, extract_data_from_shared_list, convert_numpy_to_torch
 import re
