@@ -586,7 +586,10 @@ for data in forward_data_lst:
                 config_dec.write(configfile)
 
             out_folder = os.path.abspath(out_folder)
-            files_dec = glob.glob(out_folder + "/exp_files/forward_" + data + "_ep*_ck*_" + forward_outs[k] + "_to_decode.ark")[0]
+            files_dec = out_folder + "/exp_files/forward_" + data + "_ep*_ck*_" + forward_outs[k] + "_to_decode.ark"
+            if len(glob.glob(files_dec)) > 0:
+                files_dec = glob.glob(files_dec)[0]
+            
             out_dec_folder = out_folder + "/decode_" + data + "_" + forward_outs[k]
 
             if not (os.path.exists(info_file)):
