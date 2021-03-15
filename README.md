@@ -23,8 +23,8 @@ To improve transparency and replicability of speech recognition results, we give
 
 [See a short introductory video on the PyTorch-Kaldi Toolkit](https://www.youtube.com/watch?v=VDQaf0SS4K0&t=2s)
 
-## Next Version: SpeechBrain 
-We are happy to announce the SpeechBrain project (https://speechbrain.github.io/), that aims to develop an **open-source all-in-one** toolkit based on PyTorch. The SpeechBrain project will significantly extend the functionality of the current PyTorch-Kaldi toolkit. 
+## SpeechBrain 
+We are happy to announce that the SpeechBrain project (https://speechbrain.github.io/) is now public! We strongly encourage users to migrate to [Speechbrain](https://speechbrain.github.io/). It is a much better project which already supports several speech processing tasks, such as speech recognition, speaker recognition, SLU, speech enhancement, speech separation, multi-microphone signal processing and many others. 
 
 The goal is to develop a *single*, *flexible*, and *user-friendly* toolkit that can be used to easily develop state-of-the-art speech systems for speech recognition (both end-to-end and HMM-DNN), speaker recognition, speech separation, multi-microphone signal processing (e.g, beamforming), self-supervised learning, and many others.
 
