@@ -2,3 +2,11 @@ matplotlib>=2.1.0
 scipy>=1.0.0
 numpy>=1.14.2
 blockdiag>=1.0
+
+torch~=1.6.0
+PyYAML~=5.3.1
+configparser~=4.0.2
+torchaudio~=0.6.0
+wandb~=0.10.4
+yaml~=0.1.7
+pandas~=1.0.0
