@@ -1,0 +1,51 @@
+dataset:
+  desc: Dataset name - `LibriSpeech-100`
+  value: 'LibriSpeech-100'
+
+max_epochs:
+  desc: Maximum number of epochs
+  value: 24
+
+seed:
+  desc: Initialization seed
+  value: 123
+
+batch_size:
+  desc: Mini-batch size
+  value: 256
+
+lr_g:
+  desc: Learning rate for generator
+  value: 0.0001
+
+lr_d:
+  desc: Learning rate for discriminator
+  value: 0.0004
+
+criterion:
+  desc: Loss function to use for gan
+  value: wgan
+
+optimizer:
+  desc: Optimizer to use for gan
+  value: adam
+
+generator:
+  desc: Name of the generator network
+  value: 'G'
+
+discriminator:
+  desc: Name of the discriminator network
+  value: 'D'
+
+acoustic_model_lambda:
+  desc: Lambda value for AM-loss
+  value: 1
+
+cycle_consistency_lambda:
+  desc: Lambda value for Cycle consistency
+  value: 1
+
+gp_lambda:
+  desc: Lambda value for Gradient penalty
+  value: 1
