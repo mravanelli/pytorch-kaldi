@@ -2,6 +2,7 @@
 cfg_proto=path
 cfg_proto_chunk=path
 
+
 [exp]
 cmd=str
 run_nn_script=str
@@ -13,7 +14,7 @@ save_gpumem=bool
 out_info=str
 N_epochs_tr=int(1,inf)
 
- 
+
 [data_chunk]
 fea=str
 lab=str
@@ -37,7 +38,7 @@ arch_seq_model=bool
 arch_lr=float(0,inf)
 arch_halving_factor=float(0,inf)
 arch_improvement_threshold=float(0,inf)
-arch_opt={sgd,rmsprop,adam}
+arch_opt={sgd,rmsprop,adam,radam}
 
 [model]
 model_proto=path

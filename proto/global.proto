@@ -2,6 +2,7 @@
 cfg_proto=path
 cfg_proto_chunk=path
 
+
 [exp]
 cmd=str
 run_nn_script=str
@@ -11,12 +12,21 @@ use_cuda=bool
 multi_gpu=bool
 save_gpumem=bool
 N_epochs_tr=int(1,inf)
+dataset_name=str
+
+
+[wandb]
+wandb=bool
+project=str
+config=path
+
 
 [dataset]
 data_name=str
 fea=str
 lab=str
 N_chunks=int(1,inf)
+
 
 [data_use]
 train_with=list_str
@@ -33,6 +43,7 @@ multply_factor_seq_len_train=int(0,inf)
 batch_size_valid=int(1,inf)
 max_seq_length_valid=int(20,inf)
 
+
 [architecture]
 arch_name=str
 arch_proto=path
@@ -44,8 +55,7 @@ arch_seq_model=bool
 arch_lr=list_str
 arch_halving_factor=float(0,inf)
 arch_improvement_threshold=float(0,inf)
-arch_opt={sgd,rmsprop,adam}
-
+arch_opt={sgd,rmsprop,adam,radam}
 
 [model]
 model_proto=path
