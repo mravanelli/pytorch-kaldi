@@ -1,4 +1,10 @@
 ##########################################################
+# pytorch-kaldi-gan
+# Walter Heymans
+# North West University
+# 2020
+
+# Adapted from:
 # pytorch-kaldi v.0.1
 # Mirco Ravanelli, Titouan Parcollet
 # Mila, University of Montreal
@@ -19,7 +25,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import math
+import matplotlib.pyplot as plt
+import weights_and_biases as wandb
 
+import math
+from torch.optim.optimizer import Optimizer
 
 def run_command(cmd):
     """from http://blog.kagesenshi.org/2008/02/teeing-python-subprocesspopen-output.html
@@ -538,7 +548,6 @@ def check_cfg(cfg_file, config, cfg_file_proto):
     prod_dataset_number = "dataset1"
 
     for data in name_data:
-
         [lab_names, _, _] = parse_lab_field(config[cfg_item2sec(config, "data_name", data)]["lab"])
         if "none" in lab_names and data == config["data_use"]["forward_with"]:
             config["exp"]["production"] = str("True")
@@ -932,9 +941,7 @@ def create_configs(config):
             pass
 
     for ep in range(N_ep):
-
         for tr_data in tr_data_lst:
-
             # Compute the total number of chunks for each training epoch
             N_ck_tr = compute_n_chunks(out_folder, tr_data, ep, N_ep_str_format, "train")
             N_ck_str_format = "0" + str(max(math.ceil(np.log10(N_ck_tr)), 1)) + "d"
@@ -1026,7 +1033,8 @@ def create_configs(config):
                         + pt_arch
                         + ".pkl"
                     )
-                if do_validation_after_chunk(ck, N_ck_tr, config):
+
+                if do_validation_after_chunk(ck, N_ck_tr, config) and tr_data == tr_data_lst[-1]:
                     for valid_data in valid_data_lst:
                         N_ck_valid = compute_n_chunks(out_folder, valid_data, ep, N_ep_str_format, "valid")
                         N_ck_str_format_val = "0" + str(max(math.ceil(np.log10(N_ck_valid)), 1)) + "d"
@@ -1080,6 +1088,7 @@ def create_configs(config):
                                 batch_size_tr_arr[ep],
                                 drop_rates,
                             )
+
                     if strtobool(config["batches"]["increase_seq_length_train"]):
                         if len(max_seq_length_train.split(",")) == 1:
                             max_seq_length_train_curr = max_seq_length_train_curr * int(
@@ -1091,14 +1100,88 @@ def create_configs(config):
                             # TODO: add support for increasing seq length when fea and lab have different time dimensionality
                             pass
 
-    for forward_data in forward_data_lst:
+        # Create GAN LST files
+        try:
+            if config["gan"]["arch_gan"] == "True":
+                clean_gan_data_name = config["data_use"]["clean_gan_with"].split(",")
 
+                for dataset in clean_gan_data_name:
+
+                    # Compute the total number of chunks for each training epoch
+                    N_ck_tr = compute_n_chunks(out_folder, dataset, ep, N_ep_str_format, "gan")
+
+                    # ***Epoch training***
+                    for ck in range(N_ck_tr):
+
+                        # path of the list of features for this chunk
+                        lst_file = (
+                                out_folder
+                                + "/exp_files/gan_"
+                                + dataset
+                                + "_ep"
+                                + format(ep, N_ep_str_format)
+                                + "_ck"
+                                + format(ck, N_ck_str_format)
+                                + "_*.lst"
+                        )
+
+                        # paths of the output files (info,model,chunk_specific cfg file)
+                        info_file = (
+                                out_folder
+                                + "/exp_files/gan_"
+                                + dataset
+                                + "_ep"
+                                + format(ep, N_ep_str_format)
+                                + "_ck"
+                                + format(ck, N_ck_str_format)
+                                + ".info"
+                        )
+
+                        config_chunk_file = (
+                                out_folder
+                                + "/exp_files/gan_"
+                                + dataset
+                                + "_ep"
+                                + format(ep, N_ep_str_format)
+                                + "_ck"
+                                + format(ck, N_ck_str_format)
+                                + ".cfg"
+                        )
+
+                        if strtobool(config["batches"]["increase_seq_length_train"]) == False:
+                            if len(max_seq_length_train.split(",")) == 1:
+                                max_seq_length_train_curr = int(max_seq_length_tr_arr[ep])
+                            else:
+                                max_seq_length_train_curr = max_seq_length_tr_arr[ep]
+
+                        # Write chunk-specific cfg file
+                        write_cfg_chunk(
+                            cfg_file,
+                            config_chunk_file,
+                            cfg_file_proto_chunk,
+                            pt_files,
+                            lst_file,
+                            info_file,
+                            "train",
+                            dataset,
+                            lr,
+                            max_seq_length_train_curr,
+                            name_data,
+                            ep,
+                            ck,
+                            batch_size_tr_arr[ep],
+                            drop_rates,
+                        )
+
+        except KeyError:
+            pass
+
+    for forward_data in forward_data_lst:
         # Compute the number of chunks
         N_ck_forward = compute_n_chunks(out_folder, forward_data, ep, N_ep_str_format, "forward")
         N_ck_str_format = "0" + str(max(math.ceil(np.log10(N_ck_forward)), 1)) + "d"
 
         for ck in range(N_ck_forward):
-
             # path of the list of features for this chunk
             lst_file = (
                 out_folder
@@ -1152,7 +1235,6 @@ def create_configs(config):
                 batch_size_tr_arr[ep],
                 drop_rates,
             )
-
     lst_chunk_file.close()
 
 
@@ -1165,7 +1247,16 @@ def create_lists(config):
         full_list_fea_conc = full_list[0]
         for i in range(1, len(full_list)):
             full_list_fea_conc = list(map(str.__add__, full_list_fea_conc, full_list[i]))
-        random.shuffle(full_list_fea_conc)
+
+        ganset = True
+        try:
+            if str(config["ganset"]["create_set"]) == "True":
+                ganset = False
+        except KeyError:
+            pass
+        if ganset:
+            random.shuffle(full_list_fea_conc)
+
         valid_chunks_fea = list(split_chunks(full_list_fea_conc, N_chunks))
         return valid_chunks_fea
 
@@ -1211,7 +1302,15 @@ def create_lists(config):
 
         for ep in range(N_ep):
             #  randomize the list
-            random.shuffle(full_list_fea_conc)
+            ganset = True
+            try:
+                if str(config["ganset"]["create_set"]) == "True":
+                    ganset = False
+            except KeyError:
+                pass
+            if ganset:
+                random.shuffle(full_list_fea_conc)
+
             tr_chunks_fea = list(split_chunks(full_list_fea_conc, N_chunks))
             tr_chunks_fea.reverse()
 
@@ -1269,6 +1368,72 @@ def create_lists(config):
                                 f.writelines(valid_chunks_fea_wr)
                                 f.close()
 
+    # Create GAN LST files
+    try:
+        if config["gan"]["arch_gan"] == "True":
+            clean_gan_data_name = config["data_use"]["clean_gan_with"].split(",")
+
+            # Feature lists for clean GAN dataset
+            for dataset in clean_gan_data_name:
+                sec_data = cfg_item2sec(config, "data_name", dataset)
+                [fea_names, list_fea, fea_opts, cws_left, cws_right] = parse_fea_field(
+                    config[cfg_item2sec(config, "data_name", dataset)]["fea"]
+                )
+
+                N_chunks = int(config[sec_data]["N_chunks"])
+
+                full_list = []
+
+                for i in range(len(fea_names)):
+                    full_list.append([line.rstrip("\n") + "," for line in open(list_fea[i])])
+                    full_list[i] = sorted(full_list[i])
+
+                # concatenating all the featues in a single file (useful for shuffling consistently)
+                full_list_fea_conc = full_list[0]
+                for i in range(1, len(full_list)):
+                    full_list_fea_conc = list(map(str.__add__, full_list_fea_conc, full_list[i]))
+
+                for ep in range(N_ep):
+                    #  randomize the list
+                    ganset = True
+                    try:
+                        if str(config["ganset"]["create_set"]) == "True":
+                            ganset = False
+                    except KeyError:
+                        pass
+                    if ganset:
+                        random.shuffle(full_list_fea_conc)
+
+                    tr_chunks_fea = list(split_chunks(full_list_fea_conc, N_chunks))
+                    tr_chunks_fea.reverse()
+
+                    for ck in range(N_chunks):
+                        for i in range(len(fea_names)):
+
+                            tr_chunks_fea_split = []
+                            for snt in tr_chunks_fea[ck]:
+                                # print(snt.split(',')[i])
+                                tr_chunks_fea_split.append(snt.split(",")[i])
+                            output_lst_file = (
+                                    out_folder
+                                    + "/exp_files/gan_"
+                                    + dataset
+                                    + "_ep"
+                                    + format(ep, N_ep_str_format)
+                                    + "_ck"
+                                    + format(ck, N_ck_str_format)
+                                    + "_"
+                                    + fea_names[i]
+                                    + ".lst"
+                            )
+                            f = open(output_lst_file, "w")
+                            tr_chunks_fea_wr = map(lambda x: x + "\n", tr_chunks_fea_split)
+                            f.writelines(tr_chunks_fea_wr)
+                            f.close()
+    except KeyError:
+        pass
+
+
     # forward chunk lists creation
     forward_data_name = config["data_use"]["forward_with"].split(",")
 
@@ -1296,6 +1461,7 @@ def create_lists(config):
         # randomize the list
         if _shuffle_forward_data(config):
             random.shuffle(full_list_fea_conc)
+
         forward_chunks_fea = list(split_chunks(full_list_fea_conc, N_chunks))
 
         for ck in range(N_chunks):
@@ -1423,7 +1589,6 @@ def write_cfg_chunk(
 
 
 def parse_fea_field(fea):
-
     # Adding the required fields into a list
     fea_names = []
     fea_lsts = []
@@ -2029,7 +2194,6 @@ def compute_cw_max(fea_dict):
 
 
 def model_init(inp_out_dict, model, config, arch_dict, use_cuda, multi_gpu, to_do):
-
     pattern = "(.*)=(.*)\((.*),(.*)\)"
 
     nns = {}
@@ -2054,7 +2218,17 @@ def model_init(inp_out_dict, model, config, arch_dict, use_cuda, multi_gpu, to_d
             arch_freeze_flag = strtobool(config[arch_dict[inp1][0]]["arch_freeze"])
 
             # initialize the neural network
-            net = nn_class(config[arch_dict[inp1][0]], inp_dim)
+            double_features = False
+            try:
+                if config["gan"]["double_features"] == "True":
+                    double_features = True
+            except KeyError:
+                pass
+
+            if double_features:
+                net = nn_class(config[arch_dict[inp1][0]], (inp_dim*2))
+            else:
+                net = nn_class(config[arch_dict[inp1][0]], inp_dim)
 
             if use_cuda:
                 net.cuda()
@@ -2293,10 +2467,24 @@ def forward_model_refac01(
     return outs_dict
 
 
-def forward_model(
-    fea_dict, lab_dict, arch_dict, model, nns, costs, inp, inp_out_dict, max_len, batch_size, to_do, forward_outs
-):
+def plot_waveforms(waveform_tensor):
+    with torch.no_grad():
+        if len(waveform_tensor) > 1:
+            plt.figure()
+            for i in range(len(waveform_tensor)):
+                plt.subplot(len(waveform_tensor), 1, (i + 1))
+                plt.plot(waveform_tensor[i].t().detach().to("cpu").numpy())
+            plt.show()
+        else:
+            plt.figure()
+            plt.plot(waveform_tensor.t().detach().to("cpu").numpy())
+            plt.show()
 
+
+def forward_model(
+    fea_dict, lab_dict, arch_dict, model, nns, costs, inp, inp_out_dict, max_len, batch_size, to_do, forward_outs,
+        generator = None, discriminator = None, gan_on = False, double_features = False,
+):
     # Forward Step
     outs_dict = {}
     pattern = "(.*)=(.*)\((.*),(.*)\)"
@@ -2327,7 +2515,58 @@ def forward_model(
                     if bool(arch_dict[inp1][2]):
                         inp_dnn = inp_dnn.view(max_len, batch_size, -1)
 
-                outs_dict[out_name] = nns[inp1](inp_dnn)
+                # Run features trough generator network
+                if gan_on and to_do == "train":
+                    # Using GAN on raw features
+
+                    outs_dict["inp_dnn"] = inp_dnn
+                    outs_dict["gan_training"] = True
+
+                    # Use gan for Acoustic model training
+
+                    with torch.no_grad():
+                        outs_dict["generator_output"] = generator(inp_dnn)
+
+                        if discriminator is not None:
+                            d_output = discriminator(inp_dnn)
+                            pred = d_output.data.max(1, keepdim=True)[1]
+
+                            for i in range(d_output.shape[0]):
+                                if pred[i] == 1:  # Replace clean samples with original
+                                    outs_dict["generator_output"][i] = inp_dnn[i]
+
+                    if double_features:
+                        outs_dict[out_name] = nns[inp1](torch.cat((inp_dnn, outs_dict["generator_output"]), dim = 1))
+                    else:
+                        outs_dict[out_name] = nns[inp1](outs_dict["generator_output"])
+
+                elif gan_on:    # Validation and forward with GAN
+                    # Use GAN for evaluation
+                    outs_dict["inp_dnn"] = inp_dnn
+                    outs_dict["generator_output"] = generator(inp_dnn)
+
+                    if discriminator is not None:
+                        d_output = discriminator(inp_dnn)
+                        pred = d_output.data.max(1, keepdim=True)[1]
+
+                        for i in range(d_output.shape[0]):
+                            if pred[i] == 1:  # Replace clean samples with original
+                                outs_dict["generator_output"][i] = inp_dnn[i]
+
+                    if double_features:
+                        outs_dict[out_name] = nns[inp1](
+                            torch.cat((inp_dnn, outs_dict["generator_output"].detach()), dim = 1))
+                    else:
+                        outs_dict[out_name] = nns[inp1](outs_dict["generator_output"].detach())
+
+                    outs_dict["gan_training"] = False
+                else:
+                    # Do not use GAN at all
+                    if double_features:
+                        inp_dnn = torch.cat((inp_dnn, inp_dnn), dim = 1)
+                    outs_dict["inp_dnn"] = inp_dnn
+                    outs_dict[out_name] = nns[inp1](inp_dnn)
+                    outs_dict["gan_training"] = False
 
             else:
                 if not (bool(arch_dict[inp1][2])) and len(outs_dict[inp2].shape) == 3:
@@ -2359,6 +2598,7 @@ def forward_model(
 
             if to_do != "forward":
                 outs_dict[out_name] = costs[out_name](out, lab_dnn)
+                outs_dict["lab_dnn"] = lab_dnn
 
         if operation == "cost_err":
 
@@ -2379,7 +2619,6 @@ def forward_model(
                 pred = torch.max(out, dim=1)[1]
                 err = torch.mean((pred != lab_dnn).float())
                 outs_dict[out_name] = err
-                # print(err)
 
         if operation == "concatenate":
             dim_conc = len(outs_dict[inp1].shape) - 1
@@ -2440,7 +2679,7 @@ def dump_epoch_results(
         )
     )
     print(" ")
-    print("----- Summary epoch %s / %s" % (format(ep, N_ep_str_format), format(N_ep - 1, N_ep_str_format)))
+    print("----- Summary epoch %s / %s" % (format(ep+1, N_ep_str_format), format(N_ep, N_ep_str_format)))
     print("Training on %s" % (tr_data_lst))
     print(
         "Loss = %s | err = %s "
@@ -2469,6 +2708,7 @@ def dump_epoch_results(
     for lr_arch in lr.keys():
         res_file.write("lr_%s=%s " % (lr_arch, lr[lr_arch][ep]))
         print("Learning rate on %s = %s " % (lr_arch, lr[lr_arch][ep]))
+
     print("-----")
     res_file.write("time(s)=%i\n" % (int(tot_time)))
     print("Elapsed time (s) = %i\n" % (int(tot_time)))
@@ -2477,14 +2717,14 @@ def dump_epoch_results(
 
 
 def progress(count, total, status=""):
-    bar_len = 40
+    bar_len = 30
     filled_len = int(round(bar_len * count / float(total)))
 
     percents = round(100.0 * count / float(total), 1)
     bar = "=" * filled_len + "-" * (bar_len - filled_len)
 
     if count == total - 1:
-        sys.stdout.write("[%s] %s%s %s\r" % (bar, 100, "%", status))
+        sys.stdout.write("[%s] %s%s %s  \r" % (bar, 100, "%", status))
         sys.stdout.write("\n")
     else:
         sys.stdout.write("[%s] %s%s %s\r" % (bar, percents, "%", status))

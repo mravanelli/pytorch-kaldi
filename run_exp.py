@@ -1,11 +1,15 @@
 ##########################################################
+# pytorch-kaldi-gan
+# Walter Heymans
+# North West University
+# 2020
+
+# Adapted from:
 # pytorch-kaldi v.0.1
 # Mirco Ravanelli, Titouan Parcollet
 # Mila, University of Montreal
 # October 2018
 ##########################################################
-
-
 from __future__ import print_function
 
 import os
@@ -40,6 +44,10 @@ from distutils.util import strtobool
 import importlib
 import math
 import multiprocessing
+import weights_and_biases as wandb
+import torch
+
+skip_decode = False
 
 
 def _run_forwarding_in_subprocesses(config):
@@ -63,7 +71,6 @@ def _is_first_validation(ep, ck, N_ck_tr, config):
     if ck == val_chunks[0]:
         return True
 
-    
     return False
 
 
@@ -72,6 +79,25 @@ def _max_nr_of_parallel_forwarding_processes(config):
         return int(config["forward"]["max_nr_of_parallel_forwarding_processes"])
     return -1
 
+
+def print_version_info():
+    print("")
+    print("".center(40, "#"))
+    print(" Pytorch-Kaldi-GAN ".center(38, " ").center(40, "#"))
+    print(" Walter Heymans ".center(38, " ").center(40, "#"))
+    print(" North West University ".center(38, " ").center(40, "#"))
+    print(" 2020 ".center(38, " ").center(40, "#"))
+    print("".center(38, " ").center(40, "#"))
+    print(" Adapted form: ".center(38, " ").center(40, "#"))
+    print(" Pytorch-Kaldi v.0.1 ".center(38, " ").center(40, "#"))
+    print(" Mirco Ravanelli, Titouan Parcollet ".center(38, " ").center(40, "#"))
+    print(" Mila, University of Montreal ".center(38, " ").center(40, "#"))
+    print(" October 2018 ".center(38, " ").center(40, "#"))
+    print("".center(40, "#"), end="\n\n")
+
+
+# START OF EXECUTION #
+print_version_info()
 
 # Reading global cfg file (first argument-mandatory file)
 cfg_file = sys.argv[1]
@@ -82,6 +108,7 @@ else:
     config = configparser.ConfigParser()
     config.read(cfg_file)
 
+config_file_name = str(os.path.basename(cfg_file)).replace(".cfg", "")
 
 # Reading and parsing optional arguments from command line (e.g.,--optimization,lr=0.002)
 [section_args, field_args, value_args] = read_args_command_line(sys.argv, config)
@@ -117,9 +144,9 @@ forward_save_files = list(map(strtobool, config["forward"]["save_out_file"].spli
 
 print("- Reading config file......OK!")
 
-
 # Copy the global cfg file into the output folder
 cfg_file = out_folder + "/conf.cfg"
+
 with open(cfg_file, "w") as configfile:
     config.write(configfile)
 
@@ -192,8 +219,166 @@ lab_dict = []
 arch_dict = []
 
 
+if config["gan"]["arch_gan"] == "True":
+    gan_on = True
+
+    # Checking directories
+    directory_g = os.path.join(out_folder, config["gan"]["output_path_g"])
+    directory_d = os.path.join(out_folder, config["gan"]["output_path_d"])
+
+    gan_dir = os.path.dirname(directory_g)
+
+    if not os.path.exists(gan_dir):
+        os.mkdir(gan_dir)
+
+    if not os.path.exists(gan_dir + "/images"):
+        os.mkdir(gan_dir + "/images")
+
+    try:
+        if str(config["generator"]["pretrained_file"]) != "none":
+            if os.path.exists(str(config["generator"]["pretrained_file"])):
+                copyfile(str(config["generator"]["pretrained_file"]), directory_g)
+                print("Loaded pretrained G.")
+    except KeyError:
+        pass
+
+    try:
+        if str(config["discriminator"]["pretrained_file"]) != "none":
+            if os.path.exists(str(config["discriminator"]["pretrained_file"])):
+                copyfile(str(config["discriminator"]["pretrained_file"]), directory_d)
+                print("Loaded pretrained D.")
+    except KeyError:
+        pass
+else:
+    gan_on = False
+
+
+def print_settings():
+    print_width = 72
+    print(" SETTINGS ".center(print_width, "="))
+    print("# Epochs:\t\t", N_ep)
+    print("# Batch size:\t\t", int(config["batches"]["batch_size_train"]))
+    print("# Seed:\t\t\t", int(config["exp"]["seed"]))
+    print("# Weights and Biases:\t", str(config["wandb"]["wandb"]))
+    print("# GAN training:\t\t", str(config["gan"]["arch_gan"]))
+
+    print("")
+    print(" Acoustic Model settings ".center(print_width, "-"))
+    print("# Name:\t\t\t", str(config["architecture1"]["arch_name"]))
+    print("# Learning rate:\t", float(config["architecture1"]["arch_lr"]))
+    print("# Halving factor:\t", float(config["architecture1"]["arch_halving_factor"]))
+    print("# Improvement threshold:", float(config["architecture1"]["arch_improvement_threshold"]))
+    print("# Optimizer:\t\t", str(config["architecture1"]["arch_opt"]))
+
+    try:
+        if config["gan"]["double_features"] == "True":
+            print("# Double features:\t", config["gan"]["double_features"])
+    except KeyError:
+        pass
+
+    if gan_on:
+        print("")
+        print(" Generator Architecture ".center(print_width, "-"))
+        print("# Name:\t\t\t", str(config["generator"]["arch_name"]))
+
+    print("=".center(print_width, "="), end = "\n\n")
+
+
+print_settings()
+
+if str(config["wandb"]["wandb"]) == "True":
+    wandb_cfg = wandb.load_cfg_dict_from_yaml(str(config["wandb"]["config"]))
+
+    # UPDATE config file if Weights and Biases file is different
+    wandb_cfg["max_epochs"] = int(config["exp"]["N_epochs_tr"])
+    wandb_cfg["seed"] = int(config["exp"]["seed"])
+    wandb_cfg["batch_size"] = int(config["batches"]["batch_size_train"])
+    wandb_cfg["lr"] = float(config["architecture1"]["arch_lr"])
+    wandb_cfg["gan_on"] = config["gan"]["arch_gan"]
+
+    wandb_details = os.path.join(out_folder, "wandb_details.txt")
+
+    if not os.path.exists(wandb_details):
+        wandb_details_file = open(wandb_details, "w")
+
+        wandb.initialize_wandb(project = str(config["wandb"]["project"]),
+                               config = wandb_cfg,
+                               directory = out_folder,
+                               resume = False)
+
+        try:
+            wandb_details_file.write(wandb.get_run_id() + '\n')
+            wandb_details_file.write(wandb.get_run_name())
+        except TypeError:
+            pass
+
+        wandb_details_file.close()
+    else:
+        wandb_details_file = open(wandb_details, "r")
+        file_content = wandb_details_file.read().splitlines()
+
+        try:
+            wandb_run_id = file_content[0]
+            wandb_run_name = file_content[1]
+        except IndexError:
+            wandb_run_id = ""
+            wandb_run_name = ""
+            pass
+
+        wandb_details_file.close()
+
+        if not wandb_run_id == "":
+            wandb.initialize_wandb(project = str(config["wandb"]["project"]),
+                                   config = wandb_cfg,
+                                   directory = out_folder,
+                                   resume = True,
+                                   identity = wandb_run_id,
+                                   name = wandb_run_name)
+        else:
+            wandb.initialize_wandb(project = str(config["wandb"]["project"]),
+                                   config = wandb_cfg,
+                                   directory = out_folder,
+                                   resume = True)
+
+    if str(config["wandb"]["decode_only"]) == "True":
+        wandb_decode_only = True
+        wandb_on = False
+    else:
+        wandb_on = True
+        wandb_decode_only = False
+        wandb.quick_log("status", "training", commit = False)
+else:
+    wandb_on = False
+    wandb_decode_only = False
+
+create_gan_dataset = False
+try:
+    if config["ganset"]["create_set"] == "True":
+        create_gan_dataset = True
+        print("\nGAN dataset will be created.\n")
+
+        # Output folder creation
+        gan_out_folder = config["ganset"]["out_folder"]
+        if not os.path.exists(gan_out_folder):
+            os.makedirs(gan_out_folder)
+
+except KeyError:
+    pass
+
+fine_tuning = True
+try:
+    if config["exp"]["fine_tuning"] == "False":
+        fine_tuning = False
+except KeyError:
+    pass
+
 # --------TRAINING LOOP--------#
 for ep in range(N_ep):
+
+    if wandb_on:
+        wandb.quick_log("epoch", ep + 1, commit = False)
+
+    processed_first = True
 
     tr_loss_tot = 0
     tr_error_tot = 0
@@ -202,7 +387,7 @@ for ep in range(N_ep):
 
     print(
         "------------------------------ Epoch %s / %s ------------------------------"
-        % (format(ep, N_ep_str_format), format(N_ep - 1, N_ep_str_format))
+        % (format(ep + 1, N_ep_str_format), format(N_ep, N_ep_str_format))
     )
 
     for tr_data in tr_data_lst:
@@ -213,6 +398,15 @@ for ep in range(N_ep):
 
         # ***Epoch training***
         for ck in range(N_ck_tr):
+            if not fine_tuning and ck > 1:
+                break
+            # Get training time per chunk
+            import time
+            starting_time = time.time()
+            print_chunk_time = False
+
+            if wandb_on:
+                wandb.quick_log("chunk", ck + 1, commit = True)
 
             # paths of the output files (info,model,chunk_specific cfg file)
             info_file = (
@@ -251,13 +445,13 @@ for ep in range(N_ep):
 
             # if this chunk has not already been processed, do training...
             if not (os.path.exists(info_file)):
+                print_chunk_time = True
 
                 print("Training %s chunk = %i / %i" % (tr_data, ck + 1, N_ck_tr))
 
                 # getting the next chunk
                 next_config_file = cfg_file_list[op_counter]
 
-                # run chunk processing
                 [data_name, data_set, data_end_index, fea_dict, lab_dict, arch_dict] = run_nn(
                     data_name,
                     data_set,
@@ -268,6 +462,9 @@ for ep in range(N_ep):
                     config_chunk_file,
                     processed_first,
                     next_config_file,
+                    wandb_on = wandb_on,
+                    epoch = ep,
+                    chunk = ck + 1
                 )
 
                 # update the first_processed variable
@@ -304,7 +501,7 @@ for ep in range(N_ep):
                     if os.path.exists(model_files_past[pt_arch]):
                         os.remove(model_files_past[pt_arch])
 
-            if do_validation_after_chunk(ck, N_ck_tr, config):
+            if do_validation_after_chunk(ck, N_ck_tr, config) and (tr_data == tr_data_lst[-1]) and not(create_gan_dataset):
                 if not _is_first_validation(ep,ck, N_ck_tr, config):
                     valid_peformance_dict_prev = valid_peformance_dict
                 valid_peformance_dict = {}
@@ -335,6 +532,7 @@ for ep in range(N_ep):
                         if not (os.path.exists(info_file)):
                             print("Validating %s chunk = %i / %i" % (valid_data, ck_val + 1, N_ck_valid))
                             next_config_file = cfg_file_list[op_counter]
+
                             data_name, data_set, data_end_index, fea_dict, lab_dict, arch_dict = run_nn(
                                 data_name,
                                 data_set,
@@ -345,6 +543,7 @@ for ep in range(N_ep):
                                 config_chunk_file,
                                 processed_first,
                                 next_config_file,
+                                wandb_on = wandb_on,
                             )
                             processed_first = False
                             if not (os.path.exists(info_file)):
@@ -383,6 +582,14 @@ for ep in range(N_ep):
                                 for i in range(ep + 1, N_ep):
                                     lr[lr_arch][i] = str(new_lr_value)
 
+            ending_time = time.time()
+
+            if print_chunk_time:
+                chunk_time = ending_time - starting_time
+                print("Chunk time:", round(chunk_time), "s\n")
+                if wandb_on:
+                    wandb.quick_log("chunk_time", chunk_time, commit=False)
+
         # Training Loss and Error
         tr_info_lst = sorted(
             glob.glob(out_folder + "/exp_files/train_" + tr_data + "_ep" + format(ep, N_ep_str_format) + "*.info")
@@ -394,27 +601,47 @@ for ep in range(N_ep):
         tr_time_tot = tr_time_tot + tr_time
         tot_time = tr_time + val_time_tot
 
-    # Print results in both res_file and stdout
-    dump_epoch_results(
-        res_file_path,
-        ep,
-        tr_data_lst,
-        tr_loss_tot,
-        tr_error_tot,
-        tot_time,
-        valid_data_lst,
-        valid_peformance_dict,
-        lr,
-        N_ep,
-    )
+    if not create_gan_dataset:
+        if fine_tuning:
+            # Print results in both res_file and stdout
+            dump_epoch_results(
+                res_file_path,
+                ep,
+                tr_data_lst,
+                tr_loss_tot,
+                tr_error_tot,
+                tot_time,
+                valid_data_lst,
+                valid_peformance_dict,
+                lr,
+                N_ep,
+            )
+
+    if wandb_on:
+        for lr_arch in lr.keys():
+            wandb.quick_log("learning_rate", float(lr[lr_arch][ep]), commit = False)
+
+        for valid_data in valid_data_lst:
+            wandb.quick_log("valid_loss_" + str(valid_data), float(valid_peformance_dict[valid_data][0]), commit = False)
+            wandb.quick_log("valid_error_" + str(valid_data), float(valid_peformance_dict[valid_data][1]), commit = False)
 
 # Training has ended, copy the last .pkl to final_arch.pkl for production
 for pt_arch in pt_files.keys():
     if os.path.exists(model_files[pt_arch]) and not os.path.exists(out_folder + "/exp_files/final_" + pt_arch + ".pkl"):
         copyfile(model_files[pt_arch], out_folder + "/exp_files/final_" + pt_arch + ".pkl")
 
+# Terminate application if GAN dataset creation is set
+try:
+    if config["ganset"]["create_set"] == "True":
+        print("\nGAN dataset created!")
+        exit()
+except KeyError:
+    pass
 
 # --------FORWARD--------#
+if wandb_on or wandb_decode_only:
+    wandb.quick_log("status", "forwarding", commit = True)
+
 for forward_data in forward_data_lst:
 
     # Compute the number of chunks
@@ -507,6 +734,7 @@ for forward_data in forward_data_lst:
                     config_chunk_file,
                     processed_first,
                     next_config_file,
+                    wandb_on = wandb_on,
                 )
                 processed_first = False
                 if not (os.path.exists(info_file)):
@@ -532,12 +760,64 @@ for forward_data in forward_data_lst:
 
 
 # --------DECODING--------#
+if wandb_on or wandb_decode_only:
+    wandb.quick_log("status", "decoding", commit = True)
+
 dec_lst = glob.glob(out_folder + "/exp_files/*_to_decode.ark")
 
 forward_data_lst = config["data_use"]["forward_with"].split(",")
 forward_outs = config["forward"]["forward_out"].split(",")
 forward_dec_outs = list(map(strtobool, config["forward"]["require_decoding"].split(",")))
 
+
+def get_wer_stats(word_error_rate_string):
+    wer_stats = word_error_rate_string.split(" ")
+    word_error_rate = float(wer_stats[1])
+    word_tot = wer_stats[5]
+    word_tot = int(word_tot.replace(",", ""))
+    word_ins = int(wer_stats[6])
+    word_del = int(wer_stats[8])
+    word_sub = int(wer_stats[10])
+    return word_error_rate, word_tot, word_ins, word_del, word_sub
+
+
+def get_unique_filename(results_file_name):
+    file_unique_var = False
+
+    if not os.path.exists(results_file_name):  # File does not exist yet
+        return results_file_name
+
+    # File does exist, determine number to append
+
+    results_file_name = results_file_name.replace(".txt", "")   # no number added
+
+    file_number = 1
+
+    while not file_unique_var:
+        temp_filename = results_file_name + "__" + str(file_number) + ".txt"
+
+        if not os.path.exists(temp_filename):
+            file_unique_var = True
+            results_file_name = temp_filename
+        else:
+            file_number += 1
+
+    return results_file_name
+
+
+def store_wer_stats(run_name, dataset, word_error_rate_string):
+    if not os.path.exists("results"):
+        os.makedirs("results")
+
+    results_file_name = "results/" + config["exp"]["dataset_name"] + "__" + dataset + "__" + run_name + ".txt"
+    results_file_name = get_unique_filename(results_file_name)
+    results_file = open(results_file_name, "w")
+
+    results_file.write(word_error_rate_string)
+    results_file.close()
+
+if skip_decode:
+    exit(0)
 
 for data in forward_data_lst:
     for k in range(len(forward_outs)):
@@ -620,6 +900,18 @@ for data in forward_data_lst:
             res_file.write("%s\n" % wers)
             print(wers)
 
-# Saving Loss and Err as .txt and plotting curves
-if not is_production:
-    create_curves(out_folder, N_ep, valid_data_lst)
+            try:
+                if len(wers) > 0:
+                    w_error_rate, w_tot, w_ins, w_del, w_sub = get_wer_stats(wers)
+
+                    store_wer_stats(config_file_name, data, wers)
+
+                    if wandb_on or wandb_decode_only:
+                        wandb.quick_log("WER_" + data, w_error_rate, commit=True)
+
+            except IOError:
+                pass
+
+
+if wandb_on or wandb_decode_only:
+    wandb.quick_log("status", "complete", commit = True)

@@ -1,4 +1,10 @@
 ##########################################################
+# pytorch-kaldi-gan
+# Walter Heymans
+# North West University
+# 2020
+
+# Adapted from:
 # pytorch-kaldi v.0.1
 # Mirco Ravanelli, Titouan Parcollet
 # Mila, University of Montreal
@@ -52,6 +58,18 @@ def load_dataset(
             fea = {
                 k: v for k, v in fea.items() if k in lab
             }  # This way I remove all the features without an aligment (see log file in alidir "Did not Succeded")
+
+        if "_ivector.lst" in fea_scp:
+            for utterance in fea.keys():
+                temp_features = fea[utterance]
+                new_features = np.zeros((lab[utterance].shape[0], temp_features.shape[1]))
+
+                for ivector in range(lab[utterance].shape[0]):
+                    i_temp = int(ivector / 10)
+                    new_features[ivector] = temp_features[i_temp]
+
+                fea[utterance] = new_features
+
         return fea, lab
 
     def _chunk_features_and_labels(max_sequence_length, fea, lab, fea_only, input_is_wav):
@@ -244,6 +262,8 @@ def context_window(fea, left, right):
 def load_chunk(
     fea_scp, fea_opts, lab_folder, lab_opts, left, right, max_sequence_length, output_folder, fea_only=False
 ):
+    ''' CUSTOM CODE
+    Loading chunks from Kaldi files '''
 
     # open the file
     [data_name, data_set, data_lab, end_index_fea, end_index_lab] = load_dataset(
@@ -490,7 +510,14 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
         if not (seq_model) and to_do != "forward" and (data_set.shape[0] == labs.shape[0]):
             data_set_shape = data_set.shape[1]
             data_set_joint = np.column_stack((data_set, labs))
-            np.random.shuffle(data_set)
+            ganset = True
+            try:
+                if str(config["ganset"]["create_set"]) == "True":
+                    ganset = False
+            except KeyError:
+                pass
+            if ganset:
+                np.random.shuffle(data_set)
             data_set = data_set_joint[:, :data_set_shape]
             labs = np.squeeze(data_set_joint[:, data_set_shape:], axis=-1)
         return data_set, labs
@@ -520,8 +547,8 @@ def read_lab_fea_refac01(cfg_file, fea_only, shared_list, output_folder):
 
 
 def read_lab_fea(cfg_file, fea_only, shared_list, output_folder):
-
     # Reading chunk-specific cfg file (first argument-mandatory file)
+
     if not (os.path.exists(cfg_file)):
         sys.stderr.write("ERROR: The config file %s does not exist!\n" % (cfg_file))
         sys.exit(0)
@@ -584,7 +611,6 @@ def read_lab_fea(cfg_file, fea_only, shared_list, output_folder):
                 data_set = data_set_fea
                 labs = labs_fea
                 data_end_index = data_end_index_fea
-                data_end_index = data_end_index_fea
                 data_name = data_name_fea
 
                 fea_dict[fea].append(fea_index)
@@ -598,6 +624,7 @@ def read_lab_fea(cfg_file, fea_only, shared_list, output_folder):
 
                 if cnt_lab == 0:
                     data_set = np.column_stack((data_set, data_set_fea))
+
                     fea_dict[fea].append(fea_index)
                     fea_index = fea_index + data_set_fea.shape[1]
                     fea_dict[fea].append(fea_index)
@@ -625,13 +652,20 @@ def read_lab_fea(cfg_file, fea_only, shared_list, output_folder):
             lab_dict[lab].append(data_set.shape[1] + cnt_lab)
             cnt_lab = cnt_lab + 1
 
-    data_set = np.column_stack((data_set, labs))
+    data_set = np.column_stack((data_set, labs))    # appends labels next to features
 
     # check automatically if the model is sequential
     seq_model = is_sequential_dict(config, arch_dict)
 
+    ganset = True
+    try:
+        if str(config["ganset"]["create_set"]) == "True":
+            ganset = False
+    except KeyError:
+        pass
+
     # Randomize if the model is not sequential
-    if not (seq_model) and to_do != "forward":
+    if not (seq_model) and to_do != "forward" and ganset:
         np.random.shuffle(data_set)
 
     # Split dataset in many part. If the dataset is too big, we can have issues to copy it into the shared memory (due to pickle limits)
